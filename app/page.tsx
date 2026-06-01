@@ -24,6 +24,7 @@ function ConsentModal({ onAccept }: { onAccept: () => void }) {
           width: "100%",
           background: "rgba(0,0,0,0.85)",
           border: "1px solid rgba(var(--theme-rgb, 34,197,94), 0.20)",
+          borderRadius: "4px",
           boxShadow: "0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(var(--theme-rgb, 34,197,94), 0.06)",
         }}
       >
@@ -165,6 +166,7 @@ const PANEL_STYLE: React.CSSProperties = {
   background: "rgba(0, 0, 0, 0.85)",
   border: "1px solid rgba(180,210,240,0.07)",
   backdropFilter: "blur(14px)",
+  borderRadius: "4px",
 }
 
 const PANEL_HEADER_STYLE: React.CSSProperties = {
@@ -267,7 +269,7 @@ export default function Home() {
   const [isInterceptsCollapsed, setIsInterceptsCollapsed] = useState<boolean>(false)
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
-  const [selectedChannel, setSelectedChannel] = useState<"GEOPOLITICS"|"ECONOMY"|"WEATHER">("GEOPOLITICS")
+  const [selectedChannel, setSelectedChannel] = useState<"GEOPOLITICS"|"ECONOMY"|"WEATHER"|"CYBER_AI">("GEOPOLITICS")
   const [selectedRegion, setSelectedRegion] = useState<keyof typeof REGION_COORDS>("GLOBAL")
 
   const handleRegionClick = (regionId: keyof typeof REGION_COORDS) => {
@@ -324,7 +326,7 @@ export default function Home() {
     })
   }, [allIncidents, watchconStage, selectedChannel, selectedRegion])
 
-  const handleChannelChange = (channel: "GEOPOLITICS"|"ECONOMY"|"WEATHER") => {
+  const handleChannelChange = (channel: "GEOPOLITICS"|"ECONOMY"|"WEATHER"|"CYBER_AI") => {
     if (channel === selectedChannel) return
     setIsTransitioning(true)
     setTimeout(() => { setSelectedChannel(channel); setCurrentIndex(0); setIsTransitioning(false) }, 300)
@@ -664,6 +666,7 @@ export default function Home() {
     GEOPOLITICS: { label: "GEOPOLITICS", short: "GEOPOL", color: "#22c55e" },
     ECONOMY:     { label: "ECONOMY",     short: "ECON",   color: "#3b82f6" },
     WEATHER:     { label: "WEATHER",     short: "METEO",  color: "#0ea5e9" },
+    CYBER_AI:    { label: "CYBER / AI",  short: "CYBER",  color: "#a855f7" },
   }
 
   const REGION_BUTTONS = [
@@ -756,7 +759,7 @@ export default function Home() {
       {/* ── TOP HEADER ─────────────────────────────────────── */}
       <div className="absolute top-0 left-0 right-0 z-30">
         <div
-          className="h-14 flex items-center px-5 gap-4"
+          className="h-[58px] flex items-center px-5 gap-4"
           style={{ background: "rgba(3,6,9,0.96)", backdropFilter: "blur(20px)" }}
         >
           {/* Left: system title */}
@@ -764,13 +767,13 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: themeColor, boxShadow: `0 0 6px ${themeColor}`, animation: "beacon 2.4s ease-out infinite", flexShrink: 0 }} />
               <h1
-                className="text-[11px] sm:text-[12px] font-bold tracking-[0.18em] truncate"
-                style={{ color: "#d4e2f0" }}
+                className="font-bold tracking-[0.16em] truncate"
+                style={{ fontSize: "13px", color: "#d4e2f0", fontFamily: "system-ui, -apple-system, sans-serif" }}
               >
                 GLOBAL CRISIS INTELLIGENCE MAP WATCH
               </h1>
             </div>
-            <p className="text-[7px] tracking-[0.22em] truncate mt-0.5 ml-4" style={{ color: "#3a5a78" }}>
+            <p className="truncate mt-0.5 ml-4" style={{ fontSize: "9px", letterSpacing: "0.18em", color: "#3a5a78", fontFamily: "system-ui, -apple-system, sans-serif" }}>
               VERIFIED BROADCAST SOURCE INGESTION CORE // FULL SPECTRUM PROTOCOL
             </p>
           </div>
@@ -778,7 +781,7 @@ export default function Home() {
           {/* Center: channel tabs */}
           <div
             className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5"
-            style={{ background: "rgba(180,210,240,0.03)", border: "1px solid rgba(180,210,240,0.08)", padding: "3px" }}
+            style={{ background: "rgba(180,210,240,0.03)", border: "1px solid rgba(180,210,240,0.08)", padding: "3px", borderRadius: "4px" }}
           >
             {(Object.entries(CHANNEL_CONFIG) as [keyof typeof CHANNEL_CONFIG, typeof CHANNEL_CONFIG[keyof typeof CHANNEL_CONFIG]][]).map(([ch, cfg]) => {
               const isActive = selectedChannel === ch
@@ -788,11 +791,12 @@ export default function Home() {
                   onClick={() => handleChannelChange(ch)}
                   className="cursor-pointer transition-all duration-200"
                   style={{
-                    padding: "5px 14px",
-                    fontSize: "9px",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    fontFamily: "monospace",
+                    padding: "6px 16px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    letterSpacing: "0.10em",
+                    fontFamily: "system-ui, -apple-system, sans-serif",
+                    borderRadius: "3px",
                     border: isActive ? `1px solid ${cfg.color}60` : "1px solid transparent",
                     background: isActive ? `rgba(${themeRgb}, 0.10)` : "transparent",
                     color: isActive ? cfg.color : "rgba(180,210,240,0.35)",
@@ -812,35 +816,37 @@ export default function Home() {
               onClick={() => setShowHeatmap(!showHeatmap)}
               className="cursor-pointer transition-all duration-200"
               style={{
-                fontSize: "8px",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                padding: "4px 10px",
+                fontSize: "10px",
+                fontWeight: 600,
+                letterSpacing: "0.10em",
+                padding: "5px 11px",
+                borderRadius: "3px",
                 border: showHeatmap
                   ? `1px solid rgba(${themeRgb}, 0.40)`
                   : "1px solid rgba(180,210,240,0.09)",
                 background: showHeatmap ? `rgba(${themeRgb}, 0.08)` : "transparent",
                 color: showHeatmap ? themeColor : "rgba(180,210,240,0.30)",
-                fontFamily: "monospace",
+                fontFamily: "system-ui, -apple-system, sans-serif",
               }}
             >
               HEATMAP {showHeatmap ? "ON" : "OFF"}
             </button>
 
-            <div className="flex flex-col" style={{ minWidth: "60px" }}>
-              <div className="ia-label">UTC TIME</div>
-              <div className="ia-data text-[11px]">{mounted && time ? time.toISOString().slice(11, 19) : "00:00:00"}</div>
+            <div className="flex flex-col" style={{ minWidth: "64px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", color: "#4d7898", fontFamily: "system-ui, -apple-system, sans-serif", textTransform: "uppercase" }}>UTC TIME</div>
+              <div style={{ fontSize: "13px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>{mounted && time ? time.toISOString().slice(11, 19) : "00:00:00"}</div>
             </div>
 
-            <div className="flex flex-col items-center" style={{ minWidth: "40px" }}>
-              <div className="ia-label">RENDER</div>
-              <div className="ia-data text-[11px]">{fps}<span style={{ fontSize: "8px", color: "#4d7898" }}>fps</span></div>
+            <div className="flex flex-col items-center" style={{ minWidth: "42px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", color: "#4d7898", fontFamily: "system-ui, -apple-system, sans-serif", textTransform: "uppercase" }}>RENDER</div>
+              <div style={{ fontSize: "13px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>{fps}<span style={{ fontSize: "9px", color: "#4d7898" }}> fps</span></div>
             </div>
 
             <div
               className="flex items-center gap-1.5"
               style={{
-                padding: "5px 10px",
+                padding: "5px 11px",
+                borderRadius: "3px",
                 border: `1px solid rgba(${themeRgb}, 0.20)`,
                 background: `rgba(${themeRgb}, 0.05)`,
               }}
@@ -852,7 +858,7 @@ export default function Home() {
                   animation: "beacon 2.4s ease-out infinite",
                 }}
               />
-              <span className="text-[8px] font-bold tracking-wider" style={{ color: isLoading ? "#f59e0b" : themeColor, fontFamily: "monospace" }}>
+              <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", color: isLoading ? "#f59e0b" : themeColor, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 {isLoading ? "SYNC" : isAutoPilot ? "AUTO" : "MANUAL"}
               </span>
             </div>
@@ -1037,6 +1043,7 @@ export default function Home() {
             themeColor={themeColor}
             isMinimalTactical={isMinimalTactical}
             onToggleMinimalTactical={() => setIsMinimalTactical(!isMinimalTactical)}
+            readOnly={true}
           />
         </div>
 
@@ -1184,7 +1191,7 @@ export default function Home() {
                   <div className="ia-label mb-0.5">{label}</div>
                   <div
                     className="ia-data text-[10px]"
-                    style={{ color: alert ? "#ef4444" : "#b8cfe0", animation: alert ? "data-tick 1.8s step-end infinite" : "none" }}
+                    style={{ color: alert ? "#ef4444" : "#b8cfe0" }}
                   >
                     {value}
                   </div>
@@ -1322,6 +1329,7 @@ export default function Home() {
             margin: "0 16px",
             background: "#040810",
             border: "1px solid rgba(34,197,94,0.22)",
+            borderRadius: "4px",
             boxShadow: "0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(34,197,94,0.06)",
             fontFamily: "monospace",
           }}
@@ -1422,6 +1430,7 @@ export default function Home() {
           style={{
             width: "420px",
             background: "rgba(0,0,0,0.85)",
+            borderRadius: "4px",
             border: `1px solid rgba(${
               authUI.status === "success" ? "34,197,94" :
               authUI.status === "denied" || authUI.status === "error" ? "239,68,68" :

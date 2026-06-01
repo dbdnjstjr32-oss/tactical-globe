@@ -42,6 +42,7 @@ interface WatchconPanelProps {
   themeColor: string
   isMinimalTactical: boolean
   onToggleMinimalTactical: () => void
+  readOnly?: boolean
 }
 
 export default function WatchconPanel({
@@ -51,7 +52,8 @@ export default function WatchconPanel({
   onAutoMode,
   themeColor,
   isMinimalTactical,
-  onToggleMinimalTactical
+  onToggleMinimalTactical,
+  readOnly = false
 }: WatchconPanelProps) {
   const info = WATCHCON_STAGES[watchconStage] || WATCHCON_STAGES[4]
   const fillPct = ((6 - watchconStage) / 5) * 100
@@ -70,11 +72,10 @@ export default function WatchconPanel({
       style={{
         background: 'rgba(6, 10, 18, 0.95)',
         border: `1px solid rgba(${info.rgb}, 0.25)`,
+        borderRadius: '4px',
         boxShadow: `0 0 20px rgba(${info.rgb}, 0.06), inset 0 1px 0 rgba(${info.rgb}, 0.08)`,
       }}
     >
-      {/* Top accent */}
-      <div style={{ height: '2px', background: `linear-gradient(90deg, transparent, ${info.color}, transparent)`, opacity: 0.8 }} />
 
       {/* Subtle grid watermark */}
       <div
@@ -105,7 +106,7 @@ export default function WatchconPanel({
                 : `1px solid rgba(${info.rgb}, 0.2)`,
               color: watchconData?.override ? '#ef4444' : `rgba(${info.rgb}, 0.7)`,
               background: watchconData?.override ? 'rgba(239,68,68,0.08)' : `rgba(${info.rgb}, 0.06)`,
-              animation: watchconData?.override ? 'data-tick 1.8s step-end infinite' : 'none',
+              animation: 'none',
             }}
           >
             {watchconData?.override ? 'CMD OVERRIDE' : 'AUTO MODE'}
@@ -148,45 +149,47 @@ export default function WatchconPanel({
           </div>
         </div>
 
-        {/* Control buttons */}
-        <div className="grid grid-cols-6 gap-1">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onAutoMode(); }}
-            className="py-1.5 text-[8px] font-bold tracking-wider transition-all duration-200 cursor-pointer"
-            style={{
-              border: !watchconData?.override
-                ? '1px solid rgba(14,165,233,0.7)'
-                : '1px solid rgba(180,210,240,0.10)',
-              color: !watchconData?.override ? '#0ea5e9' : 'rgba(180,210,240,0.35)',
-              background: !watchconData?.override ? 'rgba(14,165,233,0.10)' : 'transparent',
-              boxShadow: !watchconData?.override ? '0 0 8px rgba(14,165,233,0.2)' : 'none',
-            }}
-          >
-            AUTO
-          </button>
+        {/* Control buttons — admin only */}
+        {!readOnly && (
+          <div className="grid grid-cols-6 gap-1">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onAutoMode(); }}
+              className="py-1.5 text-[8px] font-bold tracking-wider transition-all duration-200 cursor-pointer"
+              style={{
+                border: !watchconData?.override
+                  ? '1px solid rgba(14,165,233,0.7)'
+                  : '1px solid rgba(180,210,240,0.10)',
+                color: !watchconData?.override ? '#0ea5e9' : 'rgba(180,210,240,0.35)',
+                background: !watchconData?.override ? 'rgba(14,165,233,0.10)' : 'transparent',
+                boxShadow: !watchconData?.override ? '0 0 8px rgba(14,165,233,0.2)' : 'none',
+              }}
+            >
+              AUTO
+            </button>
 
-          {[5, 4, 3, 2, 1].map((stageNum) => {
-            const cfg = stageConfig[stageNum]
-            const isActive = watchconData?.override && watchconStage === stageNum
-            return (
-              <button
-                key={stageNum}
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onStageChange(stageNum); }}
-                className="py-1.5 text-[8px] font-black tracking-wider transition-all duration-200 cursor-pointer"
-                style={{
-                  border: isActive ? `1px solid ${cfg.color}` : '1px solid rgba(180,210,240,0.09)',
-                  color: isActive ? cfg.color : 'rgba(180,210,240,0.40)',
-                  background: isActive ? `rgba(${cfg.rgb}, 0.12)` : 'transparent',
-                  boxShadow: isActive ? `0 0 8px rgba(${cfg.rgb}, 0.25)` : 'none',
-                }}
-              >
-                {stageNum}
-              </button>
-            )
-          })}
-        </div>
+            {[5, 4, 3, 2, 1].map((stageNum) => {
+              const cfg = stageConfig[stageNum]
+              const isActive = watchconData?.override && watchconStage === stageNum
+              return (
+                <button
+                  key={stageNum}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onStageChange(stageNum); }}
+                  className="py-1.5 text-[8px] font-black tracking-wider transition-all duration-200 cursor-pointer"
+                  style={{
+                    border: isActive ? `1px solid ${cfg.color}` : '1px solid rgba(180,210,240,0.09)',
+                    color: isActive ? cfg.color : 'rgba(180,210,240,0.40)',
+                    background: isActive ? `rgba(${cfg.rgb}, 0.12)` : 'transparent',
+                    boxShadow: isActive ? `0 0 8px rgba(${cfg.rgb}, 0.25)` : 'none',
+                  }}
+                >
+                  {stageNum}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Meta row */}
         <div
@@ -203,7 +206,7 @@ export default function WatchconPanel({
             <span className="ia-label">SCAN MODE</span>
             <span className="ia-data text-[10px]">{isMinimalTactical ? 'LOW LOAD' : 'FULL SPECTRUM'}</span>
           </div>
-          <button
+          {!readOnly && <button
             type="button"
             onClick={onToggleMinimalTactical}
             className="text-[8px] font-bold tracking-wider px-2 py-1 transition-all duration-200 cursor-pointer"
@@ -216,7 +219,7 @@ export default function WatchconPanel({
             }}
           >
             {isMinimalTactical ? 'MINIMAL ON' : 'MINIMAL OFF'}
-          </button>
+          </button>}
         </div>
       </div>
     </div>

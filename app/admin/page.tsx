@@ -39,7 +39,12 @@ export default function AdminPage() {
   
   const [watchconLogs, setWatchconLogs] = useState<WatchconLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
-  
+
+  // WATCHCON manual control
+  const [watchconStage, setWatchconStage] = useState<number>(4);
+  const [watchconOverride, setWatchconOverride] = useState<boolean>(false);
+  const [watchconUpdating, setWatchconUpdating] = useState(false);
+
   const router = useRouter();
 
   // Form State
@@ -111,6 +116,55 @@ export default function AdminPage() {
   useEffect(() => {
     fetchWatchconLogs();
   }, []);
+
+  // Sync current WATCHCON state on mount
+  useEffect(() => {
+    const sync = async () => {
+      try {
+        const res = await fetch("/api/watchcon/toggle");
+        if (res.ok) {
+          const data = await res.json();
+          setWatchconStage(data.stage);
+          setWatchconOverride(data.override);
+        }
+      } catch {}
+    };
+    sync();
+  }, []);
+
+  const handleWatchconSet = async (stage: number) => {
+    setWatchconUpdating(true);
+    try {
+      const res = await fetch("/api/watchcon/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage, override: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWatchconStage(data.stage);
+        setWatchconOverride(data.override);
+        fetchWatchconLogs();
+      }
+    } catch {} finally { setWatchconUpdating(false); }
+  };
+
+  const handleWatchconAuto = async () => {
+    setWatchconUpdating(true);
+    try {
+      const res = await fetch("/api/watchcon/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: watchconStage, override: false }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWatchconStage(data.stage);
+        setWatchconOverride(data.override);
+        fetchWatchconLogs();
+      }
+    } catch {} finally { setWatchconUpdating(false); }
+  };
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -445,6 +499,64 @@ export default function AdminPage() {
           <span className="absolute bg-black px-4 text-[9px] text-emerald-500/40 tracking-[0.4em] uppercase font-bold">
             SECURE LINK SCANNER
           </span>
+        </div>
+
+        {/* WATCHCON Manual Control */}
+        <div className="border border-emerald-500/20 bg-neutral-950/60 p-5 rounded-sm">
+          <h2 className="text-xs font-bold tracking-widest text-emerald-300 border-b border-emerald-500/20 pb-2 mb-4 uppercase">
+            ◈ WATCHCON MANUAL OVERRIDE
+          </h2>
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Current status */}
+            <div className="flex items-center gap-3 mr-4">
+              <div className="text-4xl font-black font-mono" style={{
+                color: watchconStage === 1 ? '#ef4444' : watchconStage === 2 ? '#f97316' : watchconStage === 3 ? '#f59e0b' : watchconStage === 4 ? '#3b82f6' : '#22c55e',
+              }}>
+                {watchconStage}
+              </div>
+              <div>
+                <div className="text-[9px] text-emerald-500/50 tracking-widest font-bold uppercase">
+                  {['','CRITICAL','HIGH','ELEVATED','WATCH','NORMAL'][watchconStage]}
+                </div>
+                <div className={`text-[8px] font-bold tracking-wider mt-0.5 ${watchconOverride ? 'text-red-400' : 'text-emerald-500/40'}`}>
+                  {watchconOverride ? '⚡ CMD OVERRIDE' : '● AUTO MODE'}
+                </div>
+              </div>
+            </div>
+            {/* AUTO button */}
+            <button
+              disabled={watchconUpdating}
+              onClick={handleWatchconAuto}
+              className={`px-3 py-1.5 text-[10px] font-bold tracking-wider border transition-all cursor-pointer rounded-sm ${
+                !watchconOverride
+                  ? 'border-cyan-500/60 bg-cyan-500/10 text-cyan-400'
+                  : 'border-emerald-500/20 text-emerald-500/40 hover:border-emerald-500/40 hover:text-emerald-400'
+              }`}
+            >
+              AUTO
+            </button>
+            {/* Stage buttons */}
+            {[5, 4, 3, 2, 1].map((s) => {
+              const colors: Record<number, string> = { 5:'#22c55e', 4:'#3b82f6', 3:'#f59e0b', 2:'#f97316', 1:'#ef4444' };
+              const isActive = watchconOverride && watchconStage === s;
+              return (
+                <button
+                  key={s}
+                  disabled={watchconUpdating}
+                  onClick={() => handleWatchconSet(s)}
+                  className="px-3 py-1.5 text-[10px] font-black tracking-wider border transition-all cursor-pointer rounded-sm"
+                  style={{
+                    borderColor: isActive ? colors[s] : 'rgba(255,255,255,0.08)',
+                    color: isActive ? colors[s] : 'rgba(255,255,255,0.35)',
+                    background: isActive ? `${colors[s]}18` : 'transparent',
+                    boxShadow: isActive ? `0 0 10px ${colors[s]}40` : 'none',
+                  }}
+                >
+                  CON {s}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Room Table Grid */}
