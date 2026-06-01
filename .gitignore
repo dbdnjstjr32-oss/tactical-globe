@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# worker / build runtime logs
+worker_logs/
+build_webpack.log
+prod_start.log
+chrome_start.log
+*.log
