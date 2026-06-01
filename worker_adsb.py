@@ -327,7 +327,7 @@ def poll_cycle():
 def run():
     once_mode = "--once" in sys.argv
     print("🛩️  [ADSB WORKER] Kinematic Vector Engine initiated.")
-    print(f"   bbox=KR peninsula | poll={POLL_INTERVAL}s | "
+    print(f"   bbox=Middle East | poll={POLL_INTERVAL}s | "
           f"turn>{TURN_RATE_LIMIT}°/s | descent<{DESCENT_RATE_LIMIT}ft/min")
 
     while True:

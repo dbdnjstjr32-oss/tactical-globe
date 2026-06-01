@@ -210,7 +210,7 @@ export default function GlobeMap({
       } catch {}
     }
     fetchVerified()
-    const t = setInterval(fetchVerified, 30000)
+    const t = setInterval(fetchVerified, 5000)
     return () => { active = false; clearInterval(t) }
   }, [])
 

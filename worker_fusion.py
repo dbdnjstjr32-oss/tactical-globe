@@ -40,7 +40,7 @@ LAMBDA = 0.02        # time-decay rate (per minute; ~50min → e^-1 ≈ 0.37)
 
 W_CRITICAL = 0.85    # fused weight above which WATCHCON escalates
 
-POLL_INTERVAL = 30   # seconds between fusion passes
+POLL_INTERVAL = 5    # seconds between fusion passes (low-latency tuning)
 LOOKBACK_HOURS = 2   # only fuse incidents created within this window
 MATCH_RADIUS_KM = 50.0  # spatial gate for sensor↔OSINT correlation
 
@@ -256,11 +256,19 @@ def fusion_pass():
             )
             if new_stage is not None:
                 escalations += 1
+            s_created = parse_iso(sensor["created_at"])
+            if s_created:
+                print(f"  [FUSION] ⏱ Latency from creation: "
+                      f"{(datetime.now(timezone.utc) - s_created).total_seconds():.1f}s")
         elif w_alert >= W_CRITICAL and t_osint == 0:
             # ── Pre-Alert: severe SIGINT, no OSINT yet → flag but DON'T escalate WATCHCON ──
             print(f"  [FUSION] 🛰️ SIGINT PRE-ALERT W_alert={w_alert:.3f} @ {sensor['region']} "
                   f"(s_sensor={s_sensor:.2f}, awaiting OSINT corroboration)")
             promote_status(sensor["id"], "HIGH")
+            s_created = parse_iso(sensor["created_at"])
+            if s_created:
+                print(f"  [FUSION] ⏱ Latency from creation: "
+                      f"{(datetime.now(timezone.utc) - s_created).total_seconds():.1f}s")
 
     print(f"  [FUSION] pass done | sensors={len(sensor_events)} "
           f"osint={len(osint_events)} | escalations={escalations}")
