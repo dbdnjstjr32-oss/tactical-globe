@@ -116,11 +116,11 @@ CYBER_AI_RSS_SOURCES = [
 ]
 
 CYBER_AI_TELEGRAM_SOURCES = [
-    "https://t.me/s/vxunderground",
-    "https://t.me/s/thecybersecurityhub",
-    "https://t.me/s/ExploitWarzone",
-    "https://t.me/s/techsparks",
-    "https://t.me/s/ai_machinelearning_big_data",
+    "https://t.me/s/vxunderground",           # 글로벌 악성코드/해킹 그룹 속보
+    "https://t.me/s/techsparks",              # AI 및 테크 뉴스
+    "https://t.me/s/ai_machinelearning_big_data",  # AI, 머신러닝, 빅데이터
+    "https://t.me/s/peckshield",              # Web3/DeFi 해킹 취약점 경고
+    "https://t.me/s/Security_Status",         # 국내외 사이버 침해 사고 속보
 ]
 
 # ─── Keyword Weight Dictionaries ─────────────────────────────────────────────
@@ -348,10 +348,10 @@ SOURCE_NAME_MAP = {
     "blog.google/technology/ai": "GOOGLE AI",
     "theverge.com/rss/ai": "THE VERGE AI",
     "t.me/s/vxunderground": "@vx_underground",
-    "t.me/s/thecybersecurityhub": "@cybersecurityhub",
-    "t.me/s/ExploitWarzone": "@ExploitWarzone",
     "t.me/s/techsparks": "@techsparks",
     "t.me/s/ai_machinelearning_big_data": "@ai_ml_bigdata",
+    "t.me/s/peckshield": "@peckshield",
+    "t.me/s/Security_Status": "@Security_Status",
 }
 
 def get_source_name(url):
