@@ -663,10 +663,10 @@ export default function Home() {
 
   // ── Channel config ────────────────────────────────────────
   const CHANNEL_CONFIG = {
-    GEOPOLITICS: { label: "GEOPOLITICS", short: "GEOPOL", color: "#22c55e" },
-    ECONOMY:     { label: "ECONOMY",     short: "ECON",   color: "#3b82f6" },
-    WEATHER:     { label: "WEATHER",     short: "METEO",  color: "#0ea5e9" },
-    CYBER_AI:    { label: "CYBER / AI",  short: "CYBER",  color: "#a855f7" },
+    GEOPOLITICS: { label: "🌐 GEOPOLITICS", short: "GEOPOL", color: "#22c55e" },
+    ECONOMY:     { label: "📈 ECONOMY",     short: "ECON",   color: "#3b82f6" },
+    WEATHER:     { label: "🌪 WEATHER",     short: "METEO",  color: "#0ea5e9" },
+    CYBER_AI:    { label: "🛡 CYBER / AI",  short: "CYBER",  color: "#a855f7" },
   }
 
   const REGION_BUTTONS = [
