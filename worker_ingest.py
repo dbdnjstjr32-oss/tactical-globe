@@ -5,13 +5,23 @@ import sqlite3
 import urllib.request
 import urllib.parse
 import urllib.error
+import ssl
 import json
 import html
 import hashlib
 import time
+import random
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15",
+]
 
 import sys
 if hasattr(sys.stdout, "reconfigure"):
@@ -100,13 +110,15 @@ CYBER_AI_RSS_SOURCES = [
     "https://www.hackthebox.com/rss/blog/news",
     "https://openai.com/news/rss.xml",
     "https://blog.google/technology/ai/rss/",
-    "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+    "https://www.theverge.com/rss/index.xml",
+    "https://www.darkreading.com/rss.xml",
+    "https://krebsonsecurity.com/feed/",
 ]
 
 CYBER_AI_TELEGRAM_SOURCES = [
-    "https://t.me/s/Security_Status",
     "https://t.me/s/vxunderground",
-    "https://t.me/s/badpackets",
+    "https://t.me/s/thecybersecurityhub",
+    "https://t.me/s/ExploitWarzone",
     "https://t.me/s/techsparks",
     "https://t.me/s/ai_machinelearning_big_data",
 ]
@@ -172,6 +184,22 @@ CYBER_AI_KEYWORDS = {
     "hack": 4, "breach": 4, "leaked": 4, "backdoor": 5,
     "intrusion": 4, "remote code execution": 5, "rce": 5,
     "사이버": 4, "해킹": 4, "악성코드": 4, "인공지능": 2, "딥페이크": 4,
+}
+
+# ─── Source Tier Crawl Intervals ─────────────────────────────────────────────
+SOURCE_TIER = {
+    "PUBLIC_API":        60,    # USGS, NOAA, GDACS, JMA, ReliefWeb — always safe
+    "TELEGRAM":         180,    # Telegram RSS/web — moderately safe
+    "CYBER_AI_TELEGRAM": 180,
+    "NEWS_RSS":         600,    # BBC, AP, NYTimes, BleepingComputer etc — ban risk
+}
+
+WATCHCON_TIER_OVERRIDES = {
+    1: {"PUBLIC_API":  60, "TELEGRAM":  60, "CYBER_AI_TELEGRAM":  60, "NEWS_RSS": 600},
+    2: {"PUBLIC_API":  60, "TELEGRAM": 120, "CYBER_AI_TELEGRAM": 120, "NEWS_RSS": 600},
+    3: {"PUBLIC_API": 120, "TELEGRAM": 180, "CYBER_AI_TELEGRAM": 180, "NEWS_RSS": 600},
+    4: {"PUBLIC_API": 300, "TELEGRAM": 180, "CYBER_AI_TELEGRAM": 900, "NEWS_RSS": 1800},
+    5: {"PUBLIC_API": 600, "TELEGRAM": 300, "CYBER_AI_TELEGRAM": 900, "NEWS_RSS": 3600},
 }
 
 FILTER_THRESHOLD = 4
@@ -319,9 +347,9 @@ SOURCE_NAME_MAP = {
     "openai.com": "OPENAI",
     "blog.google/technology/ai": "GOOGLE AI",
     "theverge.com/rss/ai": "THE VERGE AI",
-    "t.me/s/Security_Status": "@Security_Status",
     "t.me/s/vxunderground": "@vx_underground",
-    "t.me/s/badpackets": "@bad_packets",
+    "t.me/s/thecybersecurityhub": "@cybersecurityhub",
+    "t.me/s/ExploitWarzone": "@ExploitWarzone",
     "t.me/s/techsparks": "@techsparks",
     "t.me/s/ai_machinelearning_big_data": "@ai_ml_bigdata",
 }
@@ -383,16 +411,41 @@ def fetch_rss_sources(sources):
                         break
                 except Exception:
                     continue
-        else:
+        elif "bleepingcomputer" in url:
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(url)
+                req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                req.add_header("Referer", "https://www.bleepingcomputer.com/")
+                req.add_header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                req.add_header("Accept-Language", "en-US,en;q=0.9")
                 with urllib.request.urlopen(req, timeout=10) as response:
                     xml_data = response.read().decode("utf-8", errors="ignore")
             except Exception:
                 continue
-                
+        elif "openai.com" in url:
+            try:
+                req = urllib.request.Request(url)
+                req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
+                    xml_data = response.read().decode("utf-8", errors="ignore")
+            except Exception:
+                continue
+        else:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": random.choice(USER_AGENTS)})
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    xml_data = response.read().decode("utf-8", errors="ignore")
+            except Exception:
+                continue
+
         if not xml_data:
             continue
+
+        # Rate-limit: random delay between source fetches to avoid IP bans
+        time.sleep(random.uniform(1.5, 4.0))
             
         try:
             items = re.findall(r"<item(?:.*?)>(.*?)</item>", xml_data, re.DOTALL)
@@ -1157,13 +1210,11 @@ def run_ingestor():
     scan_interval = 1800
     once_mode = "--once" in sys.argv
 
-    # Telegram polling timer (3 minutes = 180s)
+    # Per-tier last-run timers (intervals driven by WATCHCON_TIER_OVERRIDES)
+    last_public_api_run = 0
     last_telegram_run = 0
-    telegram_interval = 180
-
-    # CYBER_AI Telegram polling timer (15 minutes = 900s)
     last_cyber_ai_telegram_run = 0
-    cyber_ai_telegram_interval = 900
+    last_news_rss_run = 0
 
     while True:
         cycle_start = time.time()
@@ -1184,88 +1235,88 @@ def run_ingestor():
         except Exception:
             pass
 
-        # ── Telegram Ingestion ───────────────────────────────────────────────
+        # ── Tier-gated fetch logic ───────────────────────────────────────────
         current_time = time.time()
-        if (current_time - last_telegram_run) >= telegram_interval:
+        tier_intervals = WATCHCON_TIER_OVERRIDES.get(stage, WATCHCON_TIER_OVERRIDES[4])
+
+        # PUBLIC_API tier — USGS, NOAA, GDACS, JMA, ReliefWeb, OWM
+        if once_mode or (current_time - last_public_api_run) >= tier_intervals["PUBLIC_API"]:
+            print("🌍 [INGEST] Fetching public API sources (USGS, NOAA, Weather)...")
+            usgs_alerts = fetch_usgs_earthquakes()
+            noaa_alerts = fetch_noaa_alerts()
+            sync_natural_alerts(usgs_alerts + noaa_alerts)
+            poll_weather_sources(force=False)
+            last_public_api_run = current_time
+        else:
+            usgs_alerts, noaa_alerts = [], []
+
+        # TELEGRAM tier — existing Telegram channels
+        if once_mode or (current_time - last_telegram_run) >= tier_intervals["TELEGRAM"]:
             fetch_and_queue_telegram_feeds()
             last_telegram_run = current_time
 
-        # ── CYBER_AI Telegram Ingestion (every 15 min) ───────────────────────
-        if (current_time - last_cyber_ai_telegram_run) >= cyber_ai_telegram_interval:
+        # CYBER_AI TELEGRAM tier
+        if once_mode or (current_time - last_cyber_ai_telegram_run) >= tier_intervals["CYBER_AI_TELEGRAM"]:
             fetch_and_queue_cyber_ai_telegram()
             last_cyber_ai_telegram_run = current_time
 
-        # ── Weather Ingestion ────────────────────────────────────────────────
-        poll_weather_sources(force=once_mode)
+        # NEWS_RSS tier — all RSS sources (GEOPOLITICS, MILITARY, CYBER_AI RSS, ECONOMY, HEALTH)
+        if once_mode or (current_time - last_news_rss_run) >= tier_intervals["NEWS_RSS"]:
+            print("🔄 [INGEST] Fetching NEWS RSS feeds...")
+            geo_feeds      = fetch_rss_sources(GEOPOLITICS_SOURCES)
+            mil_feeds      = fetch_rss_sources(MILITARY_SOURCES)
+            cyber_feeds    = fetch_rss_sources(CYBER_SOURCES)
+            health_feeds   = fetch_rss_sources(HEALTH_SOURCES)
+            eco_feeds      = fetch_rss_sources(ECONOMY_SOURCES)
+            cyber_ai_feeds = fetch_rss_sources(CYBER_AI_RSS_SOURCES)
 
-        # ── USGS / NOAA natural alerts ────────────────────────────────────────
-        print("🌍 [INGEST] Fetching USGS earthquakes and NOAA weather alerts...")
-        usgs_alerts = fetch_usgs_earthquakes()
-        noaa_alerts = fetch_noaa_alerts()
-        sync_natural_alerts(usgs_alerts + noaa_alerts)
+            all_rss_channel_feeds = [
+                ("GEOPOLITICS", geo_feeds,      TACTICAL_KEYWORDS,  FILTER_THRESHOLD),
+                ("GEOPOLITICS", mil_feeds,      MILITARY_KEYWORDS,  FILTER_THRESHOLD),
+                ("GEOPOLITICS", cyber_feeds,    CYBER_KEYWORDS,     FILTER_THRESHOLD),
+                ("GEOPOLITICS", health_feeds,   HEALTH_KEYWORDS,    4),
+                ("ECONOMY",     eco_feeds,      ECONOMY_KEYWORDS,   3),
+                ("CYBER_AI",    cyber_ai_feeds, CYBER_AI_KEYWORDS,  4),
+            ]
 
-        # ── RSS feeds ─────────────────────────────────────────────────────────
-        print("🔄 [INGEST] Fetching RSS feeds...")
-        geo_feeds       = fetch_rss_sources(GEOPOLITICS_SOURCES)
-        mil_feeds       = fetch_rss_sources(MILITARY_SOURCES)
-        cyber_feeds     = fetch_rss_sources(CYBER_SOURCES)
-        health_feeds    = fetch_rss_sources(HEALTH_SOURCES)
-        eco_feeds       = fetch_rss_sources(ECONOMY_SOURCES)
-        cyber_ai_feeds  = fetch_rss_sources(CYBER_AI_RSS_SOURCES)
-
-        # Military / Cyber / Health are merged under GEOPOLITICS channel
-        # using their respective keyword sets for filtering
-        geo_channel_feeds = [
-            ("GEOPOLITICS", geo_feeds,      TACTICAL_KEYWORDS,  FILTER_THRESHOLD),
-            ("GEOPOLITICS", mil_feeds,      MILITARY_KEYWORDS,  FILTER_THRESHOLD),
-            ("GEOPOLITICS", cyber_feeds,    CYBER_KEYWORDS,     FILTER_THRESHOLD),
-            ("GEOPOLITICS", health_feeds,   HEALTH_KEYWORDS,    4),
-            ("ECONOMY",     eco_feeds,      ECONOMY_KEYWORDS,   3),
-            ("CYBER_AI",    cyber_ai_feeds, CYBER_AI_KEYWORDS,  4),
-        ]
-
-        inserted = 0
-
-        with get_db_connection() as conn:
-            cursor = conn.cursor()
-
-            for channel, feeds, keywords, threshold in geo_channel_feeds:
-                for feed in feeds:
-                    # 1. Keyword priority filter
-                    if evaluate_tactical_priority(feed, keywords) < threshold:
-                        continue
-
-                    # 2. Politics filter
-                    content_lower = (feed.get("title", "") + " " + feed.get("summary", "")).lower()
-                    if any(kw in content_lower for kw in POLITICS_KEYWORDS):
-                        print(f"🚫 [POLITICS FILTER] {channel} 정치 기사 제외: [{feed.get('source')}] {feed.get('title')[:60]}")
-                        continue
-
-                    article_hash = hashlib.md5(feed["link"].encode()).hexdigest()
-
-                    # 3. Dedup check (incidents + raw_feeds)
-                    if (
-                        cursor.execute("SELECT id FROM incidents WHERE id=?", (article_hash,)).fetchone() or
-                        cursor.execute("SELECT id FROM raw_feeds WHERE id=?", (article_hash,)).fetchone()
-                    ):
-                        continue
-
-                    cursor.execute("""
-                        INSERT INTO raw_feeds (id, channel, title, link, summary, source, pub_date, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        article_hash, channel,
-                        feed["title"], feed["link"], feed["summary"],
-                        feed["source"], feed["pub_date"],
-                        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-                    ))
-                    inserted += 1
-
-            conn.commit()
+            inserted = 0
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                for channel, feeds, keywords, threshold in all_rss_channel_feeds:
+                    for feed in feeds:
+                        # 1. Keyword priority filter
+                        if evaluate_tactical_priority(feed, keywords) < threshold:
+                            continue
+                        # 2. Politics filter
+                        content_lower = (feed.get("title", "") + " " + feed.get("summary", "")).lower()
+                        if any(kw in content_lower for kw in POLITICS_KEYWORDS):
+                            print(f"🚫 [POLITICS FILTER] {channel} 정치 기사 제외: [{feed.get('source')}] {feed.get('title')[:60]}")
+                            continue
+                        article_hash = hashlib.md5(feed["link"].encode()).hexdigest()
+                        # 3. Dedup check (incidents + raw_feeds)
+                        if (
+                            cursor.execute("SELECT id FROM incidents WHERE id=?", (article_hash,)).fetchone() or
+                            cursor.execute("SELECT id FROM raw_feeds WHERE id=?", (article_hash,)).fetchone()
+                        ):
+                            continue
+                        cursor.execute("""
+                            INSERT INTO raw_feeds (id, channel, title, link, summary, source, pub_date, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            article_hash, channel,
+                            feed["title"], feed["link"], feed["summary"],
+                            feed["source"], feed["pub_date"],
+                            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                        ))
+                        inserted += 1
+                conn.commit()
+            print(f"📥 [NEWS RSS] {inserted} new articles queued")
+            last_news_rss_run = current_time
 
         elapsed_fetch = time.time() - cycle_start
-        print(f"📥 [INGEST] {inserted} new articles queued | USGS:{len(usgs_alerts)} NOAA:{len(noaa_alerts)} | "
-              f"Fetch took {elapsed_fetch:.1f}s")
+        print(f"📊 [INGEST CYCLE] Elapsed: {elapsed_fetch:.1f}s | "
+              f"Stage: {stage} | Tier intervals: PUBLIC_API={tier_intervals['PUBLIC_API']}s "
+              f"TELEGRAM={tier_intervals['TELEGRAM']}s NEWS_RSS={tier_intervals['NEWS_RSS']}s")
 
         if once_mode:
             print("🚀 [INGEST WORKER] Single-pass completed. Exiting.")
@@ -1279,19 +1330,26 @@ def run_ingestor():
             time.sleep(1)
             elapsed += 1
 
-            # Check Telegram polling during sleep
             current_time = time.time()
-            if (current_time - last_telegram_run) >= telegram_interval:
+            tier_intervals = WATCHCON_TIER_OVERRIDES.get(stage, WATCHCON_TIER_OVERRIDES[4])
+
+            # Check Telegram polling during sleep
+            if (current_time - last_telegram_run) >= tier_intervals["TELEGRAM"]:
                 fetch_and_queue_telegram_feeds()
                 last_telegram_run = current_time
 
             # Check CYBER_AI Telegram polling during sleep
-            if (current_time - last_cyber_ai_telegram_run) >= cyber_ai_telegram_interval:
+            if (current_time - last_cyber_ai_telegram_run) >= tier_intervals["CYBER_AI_TELEGRAM"]:
                 fetch_and_queue_cyber_ai_telegram()
                 last_cyber_ai_telegram_run = current_time
 
-            # Check Weather polling during sleep
-            poll_weather_sources(force=False)
+            # Check PUBLIC_API polling during sleep
+            if (current_time - last_public_api_run) >= tier_intervals["PUBLIC_API"]:
+                usgs_alerts = fetch_usgs_earthquakes()
+                noaa_alerts = fetch_noaa_alerts()
+                sync_natural_alerts(usgs_alerts + noaa_alerts)
+                poll_weather_sources(force=False)
+                last_public_api_run = current_time
 
             try:
                 mtime = os.stat(WATCHCON_PATH).st_mtime
