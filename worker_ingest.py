@@ -14,6 +14,7 @@ import random
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from db_utils import get_db_connection
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -211,13 +212,6 @@ POLITICS_KEYWORDS = [
 def evaluate_tactical_priority(article, keywords):
     text = (article["title"] + " " + article["summary"]).lower()
     return sum(weight for keyword, weight in keywords.items() if keyword in text)
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=15000")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    return conn
 
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)

@@ -13,6 +13,7 @@ import threading
 from datetime import datetime, timezone
 import concurrent.futures
 import gc
+from db_utils import get_db_connection
 import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -26,13 +27,6 @@ WATCHCON_PATH = os.path.join(BASE_DIR, "data", "watchcon.json")
 
 # ─── Thread-safety lock for geo_cache file I/O ───────────────────────────────
 geo_cache_lock = threading.RLock()
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=15000")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    return conn
 
 # Environment
 for env_file in [".env.local", ".env"]:
