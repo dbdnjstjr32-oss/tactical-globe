@@ -36,7 +36,25 @@ export async function POST(
     const reportLat = userLat !== undefined ? userLat : lat;
     const reportLng = userLng !== undefined ? userLng : lng;
 
-    if (!content || !userId || !username) {
+    // ── DEV God Mode (env-gated; disabled unless GODMODE_SECRET is set) ──
+    // Syntax: "/godmode <secret> <message>". Public clients without the
+    // server-side secret can never trigger the trust bypass.
+    let godMode = false;
+    let effectiveContent = content;
+    if (typeof content === "string" && content.toLowerCase().startsWith("/godmode")) {
+      const secret = process.env.GODMODE_SECRET;
+      const rest = content.slice("/godmode".length).trimStart();
+      const [token, ...msgParts] = rest.split(/\s+/);
+      if (secret && token === secret) {
+        godMode = true;
+        effectiveContent = msgParts.join(" ");   // strip "/godmode <secret>"
+      } else {
+        // No valid secret → strip command, store as a normal post (no bypass)
+        effectiveContent = rest;
+      }
+    }
+
+    if (!effectiveContent || !userId || !username) {
       return NextResponse.json({ error: "MISSING_REQUIRED_FIELDS" }, { status: 400 });
     }
 
@@ -73,17 +91,27 @@ export async function POST(
       spatialDistanceKm = haversineKm(finalLat, finalLng, roomGeo.lat, roomGeo.lng);
       isVerified = (spatialDistanceKm <= 10 && trustScore > 0.7) ? 1 : 0;
     }
+    if (godMode) isVerified = 1;   // bypass spatial-trust filter
 
     // 3. Insert post
     db.prepare(`
       INSERT INTO posts (id, room_id, user_id, content, media_url, lat, lng, trust_score, created_at, spatial_distance_km, is_verified)
       VALUES (?, ?, ?, ?, ?, ?, ?, 0.5, ?, ?, ?)
-    `).run(postId, roomId, userId, content, mediaUrl || null, finalLat, finalLng, nowIso, spatialDistanceKm, isVerified);
+    `).run(postId, roomId, userId, effectiveContent, mediaUrl || null, finalLat, finalLng, nowIso, spatialDistanceKm, isVerified);
 
     // 4. Update last activity of the room
     db.prepare(`
       UPDATE rooms SET last_activity = ? WHERE id = ?
     `).run(nowIso, roomId);
+
+    // God Mode: escalate the linked incident to CRITICAL
+    if (godMode) {
+      const r = db.prepare("SELECT incident_id FROM rooms WHERE id = ?").get(roomId) as any;
+      if (r?.incident_id) {
+        db.prepare("UPDATE incidents SET status='CRITICAL' WHERE id = ?").run(r.incident_id);
+      }
+      console.warn(`[GODMODE] verified bypass by ${userId} in room ${roomId}`);
+    }
 
     const newPost = db.prepare(`
       SELECT p.*, u.username, u.trust_level
