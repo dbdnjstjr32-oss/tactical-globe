@@ -22,7 +22,7 @@ function ConsentModal({ onAccept }: { onAccept: () => void }) {
         style={{
           maxWidth: "440px",
           width: "100%",
-          background: "rgba(4,8,16,0.99)",
+          background: "rgba(0,0,0,0.85)",
           border: "1px solid rgba(var(--theme-rgb, 34,197,94), 0.20)",
           boxShadow: "0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(var(--theme-rgb, 34,197,94), 0.06)",
         }}
@@ -162,7 +162,7 @@ type TelemetryData = {
 
 // ── SHARED STYLES ─────────────────────────────────────────────
 const PANEL_STYLE: React.CSSProperties = {
-  background: "rgba(6, 10, 18, 0.92)",
+  background: "rgba(0, 0, 0, 0.85)",
   border: "1px solid rgba(180,210,240,0.07)",
   backdropFilter: "blur(14px)",
 }
@@ -177,12 +177,12 @@ const PANEL_HEADER_STYLE: React.CSSProperties = {
 }
 
 const LABEL_STYLE: React.CSSProperties = {
-  fontSize: "8px",
+  fontSize: "10px",
   fontWeight: 700,
-  letterSpacing: "0.16em",
+  letterSpacing: "0.12em",
   textTransform: "uppercase" as const,
-  color: "#4d7898",
-  fontFamily: "monospace",
+  color: "#5a8aab",
+  fontFamily: "system-ui, sans-serif",
 }
 
 function PanelLabel({ children }: { children: React.ReactNode }) {
@@ -211,8 +211,8 @@ function MetricBar({ label, value, maxValue, unit, themeColor, themeRgb }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "8px", fontWeight: 700, color: "#4d7898", letterSpacing: "0.12em", fontFamily: "monospace" }}>{label}</span>
-        <span style={{ fontSize: "9px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>
+        <span style={{ fontSize: "10px", fontWeight: 600, color: "#5a8aab", letterSpacing: "0.08em", fontFamily: "system-ui, sans-serif" }}>{label}</span>
+        <span style={{ fontSize: "11px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>
           {value.toFixed(2)}{unit}
         </span>
       </div>
@@ -755,12 +755,9 @@ export default function Home() {
 
       {/* ── TOP HEADER ─────────────────────────────────────── */}
       <div className="absolute top-0 left-0 right-0 z-30">
-        {/* Classification accent */}
-        <div className="classified-stripe" />
-        {/* Main bar */}
         <div
           className="h-14 flex items-center px-5 gap-4"
-          style={{ background: "rgba(3,6,9,0.96)", borderBottom: "1px solid rgba(180,210,240,0.07)", backdropFilter: "blur(20px)" }}
+          style={{ background: "rgba(3,6,9,0.96)", backdropFilter: "blur(20px)" }}
         >
           {/* Left: system title */}
           <div className="min-w-0 flex-1 flex flex-col justify-center">
@@ -864,7 +861,7 @@ export default function Home() {
       </div>
 
       {/* ── LEFT COLUMN ───────────────────────────────────── */}
-      <div className="absolute left-5 top-[58px] bottom-12 w-[282px] z-30 flex flex-col gap-2.5 pointer-events-none">
+      <div className="absolute left-5 top-20 bottom-12 w-[282px] z-30 flex flex-col gap-2.5 pointer-events-none">
 
         {/* INTEL INTERCEPTS */}
         <div
@@ -1028,7 +1025,7 @@ export default function Home() {
       </div>
 
       {/* ── RIGHT COLUMN ──────────────────────────────────── */}
-      <div className="absolute right-5 top-[58px] bottom-12 w-[306px] z-30 flex flex-col gap-2.5 pointer-events-none">
+      <div className="absolute right-5 top-20 bottom-12 w-[306px] z-30 flex flex-col gap-2.5 pointer-events-none">
 
         {/* WATCHCON */}
         <div className="pointer-events-auto shrink-0">
@@ -1078,13 +1075,13 @@ export default function Home() {
                   onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.07)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.35)" }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.03)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.18)" }}
                 >
-                  <div style={{ fontSize: "10px", fontWeight: 700, color: "#d4e2f0", marginBottom: "2px", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#d4e2f0", marginBottom: "2px", fontFamily: "system-ui, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {room.title}
                   </div>
-                  <div style={{ fontSize: "8px", color: "rgba(180,210,240,0.35)", fontFamily: "monospace", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(180,210,240,0.45)", fontFamily: "system-ui, sans-serif", marginBottom: "4px" }}>
                     {room.region} · {room.country}
                   </div>
-                  <div style={{ fontSize: "7px", color: "rgba(239,68,68,0.7)", letterSpacing: "0.14em", fontWeight: 700, fontFamily: "monospace" }}>
+                  <div style={{ fontSize: "9px", color: "rgba(239,68,68,0.7)", letterSpacing: "0.12em", fontWeight: 700, fontFamily: "monospace" }}>
                     ▶ CONNECT TO ROOM
                   </div>
                 </div>
@@ -1145,19 +1142,19 @@ export default function Home() {
             </div>
 
             {/* Title */}
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#d4e2f0", fontFamily: "monospace", lineHeight: 1.4, letterSpacing: "0.04em" }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#d4e2f0", fontFamily: "system-ui, sans-serif", lineHeight: 1.4, letterSpacing: "0.01em" }}>
               {displayTitle}
             </div>
 
             {/* Summary */}
             <div
               style={{
-                fontSize: "10px",
-                color: "#8aabbf",
-                lineHeight: 1.6,
+                fontSize: "12px",
+                color: "#9bbdd4",
+                lineHeight: 1.65,
                 paddingTop: "8px",
                 borderTop: `1px solid rgba(${themeRgb}, 0.10)`,
-                fontFamily: "sans-serif",
+                fontFamily: "system-ui, sans-serif",
               }}
             >
               {displaySummary}
@@ -1247,13 +1244,13 @@ export default function Home() {
               <div
                 key={idx}
                 style={{
-                  fontSize: "8px",
+                  fontSize: "10px",
                   fontFamily: "monospace",
                   padding: "3px 6px",
                   borderLeft: idx === 0 ? `2px solid ${themeColor}` : "2px solid rgba(180,210,240,0.06)",
                   background: idx === 0 ? `rgba(${themeRgb}, 0.06)` : "transparent",
-                  color: idx === 0 ? themeColor : "rgba(180,210,240,0.30)",
-                  letterSpacing: "0.04em",
+                  color: idx === 0 ? themeColor : "rgba(180,210,240,0.35)",
+                  letterSpacing: "0.03em",
                   lineHeight: 1.5,
                   transition: "all 0.3s",
                 }}
@@ -1424,7 +1421,7 @@ export default function Home() {
         <div
           style={{
             width: "420px",
-            background: "rgba(4,8,16,0.99)",
+            background: "rgba(0,0,0,0.85)",
             border: `1px solid rgba(${
               authUI.status === "success" ? "34,197,94" :
               authUI.status === "denied" || authUI.status === "error" ? "239,68,68" :

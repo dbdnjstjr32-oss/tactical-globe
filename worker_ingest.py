@@ -93,6 +93,24 @@ TELEGRAM_FALLBACK_DOMAINS = [
     "https://rss.fatman.top",
 ]
 
+# ─── CYBER_AI Sources ─────────────────────────────────────────────────────────
+CYBER_AI_RSS_SOURCES = [
+    "https://feeds.feedburner.com/TheHackersNews",
+    "https://www.bleepingcomputer.com/feed/",
+    "https://www.hackthebox.com/rss/blog/news",
+    "https://openai.com/news/rss.xml",
+    "https://blog.google/technology/ai/rss/",
+    "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+]
+
+CYBER_AI_TELEGRAM_SOURCES = [
+    "https://t.me/s/Security_Status",
+    "https://t.me/s/vxunderground",
+    "https://t.me/s/badpackets",
+    "https://t.me/s/techsparks",
+    "https://t.me/s/ai_machinelearning_big_data",
+]
+
 # ─── Keyword Weight Dictionaries ─────────────────────────────────────────────
 TACTICAL_KEYWORDS = {
     "explosion": 4, "blast": 3, "missile": 5, "strike": 3, "attack": 2,
@@ -141,6 +159,19 @@ HEALTH_KEYWORDS = {
     "vaccine": 3, "mutation": 4, "variant": 4, "who": 2, "cdc": 2,
     "health emergency": 5, "bioterrorism": 5, "contagion": 4, "infection": 3,
     "hospitalization": 3, "mpox": 4, "ebola": 5, "cholera": 4, "plague": 5,
+}
+
+CYBER_AI_KEYWORDS = {
+    "cyberattack": 5, "ransomware": 5, "data breach": 5, "zero-day": 5,
+    "exploit": 4, "vulnerability": 4, "malware": 4, "ddos": 4,
+    "apt": 4, "supply chain attack": 5, "critical infrastructure": 5,
+    "state-sponsored": 5, "botnet": 3, "phishing": 3, "spyware": 4,
+    "ai model": 3, "llm": 3, "gpt": 3, "artificial intelligence": 2,
+    "ai safety": 4, "deepfake": 4, "ai regulation": 3, "model leak": 5,
+    "training data": 3, "alignment": 3, "open source ai": 2,
+    "hack": 4, "breach": 4, "leaked": 4, "backdoor": 5,
+    "intrusion": 4, "remote code execution": 5, "rce": 5,
+    "사이버": 4, "해킹": 4, "악성코드": 4, "인공지능": 2, "딥페이크": 4,
 }
 
 FILTER_THRESHOLD = 4
@@ -283,6 +314,16 @@ SOURCE_NAME_MAP = {
     "telegram/channel/OSINTdefender": "@OSINTdefender",
     "telegram/channel/bellingcat": "@bellingcat",
     "telegram/channel/Conflict_telegram": "@Conflict_telegram",
+    # CYBER_AI sources
+    "hackthebox": "HACK THE BOX",
+    "openai.com": "OPENAI",
+    "blog.google/technology/ai": "GOOGLE AI",
+    "theverge.com/rss/ai": "THE VERGE AI",
+    "t.me/s/Security_Status": "@Security_Status",
+    "t.me/s/vxunderground": "@vx_underground",
+    "t.me/s/badpackets": "@bad_packets",
+    "t.me/s/techsparks": "@techsparks",
+    "t.me/s/ai_machinelearning_big_data": "@ai_ml_bigdata",
 }
 
 def get_source_name(url):
@@ -507,6 +548,100 @@ def fetch_and_queue_telegram_feeds():
             inserted += 1
         conn.commit()
     print(f"📥 [TELEGRAM INGEST] {inserted} new Telegram articles queued.")
+    return inserted
+
+# ─── CYBER_AI Telegram Web Scraper ───────────────────────────────────────────
+def fetch_and_queue_cyber_ai_telegram():
+    """CYBER_AI Telegram 채널 t.me/s/ 웹페이지 스크랩 및 raw_feeds 큐 삽입.
+    HTML 파싱 실패 시 RSS fallback 사용."""
+    print("🔐 [CYBER_AI TELEGRAM] Fetching CYBER_AI Telegram sources...")
+    inserted = 0
+
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+
+        for tg_url in CYBER_AI_TELEGRAM_SOURCES:
+            source_name = get_source_name(tg_url)
+            articles = []
+
+            # ── 1. Try HTML scrape of t.me/s/ page ───────────────────────────
+            try:
+                req = urllib.request.Request(tg_url)
+                req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                req.add_header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                req.add_header("Accept-Language", "en-US,en;q=0.9")
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    raw_html = resp.read().decode("utf-8", errors="ignore")
+
+                # Extract message text from tgme_widget_message_text divs
+                msg_texts = re.findall(
+                    r'class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>',
+                    raw_html, re.DOTALL
+                )
+                msg_links = re.findall(
+                    r'class="tgme_widget_message_wrap[^"]*".*?href="(https://t\.me/[^"]+)"',
+                    raw_html, re.DOTALL
+                )
+
+                for i, text_html in enumerate(msg_texts):
+                    clean_text = re.sub(r"<[^>]+>", " ", text_html)
+                    clean_text = html.unescape(clean_text).replace("\n", " ").strip()
+                    if len(clean_text) < 20:
+                        continue
+                    link = msg_links[i] if i < len(msg_links) else tg_url
+                    articles.append({
+                        "title": clean_text[:120],
+                        "link": link,
+                        "summary": clean_text,
+                        "source": source_name,
+                        "pub_date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    })
+                print(f"  [CYBER_AI TG] HTML: {len(articles)} msgs from {tg_url}")
+            except Exception as e:
+                print(f"  [CYBER_AI TG] HTML fetch failed for {tg_url}: {e}")
+
+            # ── 2. Fallback: treat as RSS ─────────────────────────────────────
+            if len(articles) == 0:
+                try:
+                    rss_articles = fetch_rss_sources([tg_url])
+                    articles = rss_articles
+                    print(f"  [CYBER_AI TG] RSS fallback: {len(articles)} items from {tg_url}")
+                except Exception as e:
+                    print(f"  [CYBER_AI TG] RSS fallback also failed for {tg_url}: {e}")
+
+            # ── 3. Filter + dedup + insert ────────────────────────────────────
+            for feed in articles:
+                if evaluate_tactical_priority(feed, CYBER_AI_KEYWORDS) < 4:
+                    continue
+
+                link = feed.get("link", "")
+                if not link:
+                    continue
+                article_hash = hashlib.md5(link.encode()).hexdigest()
+
+                if (
+                    cursor.execute("SELECT id FROM incidents WHERE id=?", (article_hash,)).fetchone() or
+                    cursor.execute("SELECT id FROM raw_feeds WHERE id=?", (article_hash,)).fetchone()
+                ):
+                    continue
+
+                cursor.execute("""
+                    INSERT INTO raw_feeds (id, channel, title, link, summary, source, pub_date, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    article_hash, "CYBER_AI",
+                    feed.get("title", "")[:255],
+                    link,
+                    feed.get("summary", ""),
+                    feed.get("source", source_name),
+                    feed.get("pub_date", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")),
+                    datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                ))
+                inserted += 1
+
+        conn.commit()
+
+    print(f"📥 [CYBER_AI TELEGRAM] {inserted} new CYBER_AI Telegram articles queued.")
     return inserted
 
 # ─── Weather / Natural Disaster Harvester ─────────────────────────────────────
@@ -1015,7 +1150,7 @@ def read_watchcon_file():
 def run_ingestor():
     init_db()
     print("🚀 [INGEST WORKER] Full-Spectrum Asynchronous Pipeline Initiated.")
-    print("   Channels: GEOPOLITICS | MILITARY | CYBER | HEALTH | ECONOMY | USGS | NOAA | TELEGRAM | WEATHER")
+    print("   Channels: GEOPOLITICS | MILITARY | CYBER | HEALTH | ECONOMY | USGS | NOAA | TELEGRAM | WEATHER | CYBER_AI")
 
     last_watchcon_mtime = 0
     stage = 4
@@ -1025,6 +1160,10 @@ def run_ingestor():
     # Telegram polling timer (3 minutes = 180s)
     last_telegram_run = 0
     telegram_interval = 180
+
+    # CYBER_AI Telegram polling timer (15 minutes = 900s)
+    last_cyber_ai_telegram_run = 0
+    cyber_ai_telegram_interval = 900
 
     while True:
         cycle_start = time.time()
@@ -1051,6 +1190,11 @@ def run_ingestor():
             fetch_and_queue_telegram_feeds()
             last_telegram_run = current_time
 
+        # ── CYBER_AI Telegram Ingestion (every 15 min) ───────────────────────
+        if (current_time - last_cyber_ai_telegram_run) >= cyber_ai_telegram_interval:
+            fetch_and_queue_cyber_ai_telegram()
+            last_cyber_ai_telegram_run = current_time
+
         # ── Weather Ingestion ────────────────────────────────────────────────
         poll_weather_sources(force=once_mode)
 
@@ -1062,20 +1206,22 @@ def run_ingestor():
 
         # ── RSS feeds ─────────────────────────────────────────────────────────
         print("🔄 [INGEST] Fetching RSS feeds...")
-        geo_feeds    = fetch_rss_sources(GEOPOLITICS_SOURCES)
-        mil_feeds    = fetch_rss_sources(MILITARY_SOURCES)
-        cyber_feeds  = fetch_rss_sources(CYBER_SOURCES)
-        health_feeds = fetch_rss_sources(HEALTH_SOURCES)
-        eco_feeds    = fetch_rss_sources(ECONOMY_SOURCES)
+        geo_feeds       = fetch_rss_sources(GEOPOLITICS_SOURCES)
+        mil_feeds       = fetch_rss_sources(MILITARY_SOURCES)
+        cyber_feeds     = fetch_rss_sources(CYBER_SOURCES)
+        health_feeds    = fetch_rss_sources(HEALTH_SOURCES)
+        eco_feeds       = fetch_rss_sources(ECONOMY_SOURCES)
+        cyber_ai_feeds  = fetch_rss_sources(CYBER_AI_RSS_SOURCES)
 
         # Military / Cyber / Health are merged under GEOPOLITICS channel
         # using their respective keyword sets for filtering
         geo_channel_feeds = [
-            ("GEOPOLITICS", geo_feeds,    TACTICAL_KEYWORDS,  FILTER_THRESHOLD),
-            ("GEOPOLITICS", mil_feeds,    MILITARY_KEYWORDS,  FILTER_THRESHOLD),
-            ("GEOPOLITICS", cyber_feeds,  CYBER_KEYWORDS,     FILTER_THRESHOLD),
-            ("GEOPOLITICS", health_feeds, HEALTH_KEYWORDS,    4),
-            ("ECONOMY",     eco_feeds,    ECONOMY_KEYWORDS,   3),
+            ("GEOPOLITICS", geo_feeds,      TACTICAL_KEYWORDS,  FILTER_THRESHOLD),
+            ("GEOPOLITICS", mil_feeds,      MILITARY_KEYWORDS,  FILTER_THRESHOLD),
+            ("GEOPOLITICS", cyber_feeds,    CYBER_KEYWORDS,     FILTER_THRESHOLD),
+            ("GEOPOLITICS", health_feeds,   HEALTH_KEYWORDS,    4),
+            ("ECONOMY",     eco_feeds,      ECONOMY_KEYWORDS,   3),
+            ("CYBER_AI",    cyber_ai_feeds, CYBER_AI_KEYWORDS,  4),
         ]
 
         inserted = 0
@@ -1138,6 +1284,11 @@ def run_ingestor():
             if (current_time - last_telegram_run) >= telegram_interval:
                 fetch_and_queue_telegram_feeds()
                 last_telegram_run = current_time
+
+            # Check CYBER_AI Telegram polling during sleep
+            if (current_time - last_cyber_ai_telegram_run) >= cyber_ai_telegram_interval:
+                fetch_and_queue_cyber_ai_telegram()
+                last_cyber_ai_telegram_run = current_time
 
             # Check Weather polling during sleep
             poll_weather_sources(force=False)

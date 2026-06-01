@@ -187,6 +187,27 @@ def process_ai_intel_analysis(article_title, article_summary, channel):
         - watchcon_trigger: Boolean (true/false) indicating whether this represents a direct interstate clash, nuclear threat, large-scale airstrike, or direct engagement of US/South Korean forces.
         JSON Output:
         """
+    elif channel == "CYBER_AI":
+        category_desc = 'Choose exactly one from ["CYBERATTACK", "DATA_BREACH", "ZERO_DAY", "RANSOMWARE", "AI_INCIDENT", "DEEPFAKE", "MODEL_LEAK", "BOTNET", "ESPIONAGE", "INFRASTRUCTURE_ATTACK"].'
+        summary_instruction = "Write a concise 3 to 4 sentence objective technical summary in KOREAN (한국어). Focus on confirmed CVEs, threat actors, affected systems, and impact. No speculation."
+        prompt = f"""
+        [CYBER & AI OSINT INTELLIGENCE BRIEFING PROTOCOL]
+        Analyze this cybersecurity or AI incident report and extract structured threat telemetry.
+        Article Title: {article_title}
+        Article Summary: {article_summary}
+        You must output exactly in JSON format, no preamble, no markdown.
+        JSON Schema fields required:
+        - region: Specific city, town, or province where the attack originated or impacted. MUST BE ONLY IN ENGLISH ALPHABET. NO KOREAN.
+          CRITICAL RULE: If the location is in the United States, specify the state name alongside the city.
+        - country: The sovereign country name in English.
+        - category: {category_desc}
+        - severity: Floating point number from 0.00 to 1.00 indicating threat/crisis gravity.
+        - sanity_score: Number from 0.00 to 1.00 scoring the factual reliability based on the source and tone.
+        - tactical_summary: {summary_instruction} Use a serious technical analyst reporting tone.
+        - pin_worthy: Boolean (true/false) indicating whether this is a critical breaking cybersecurity event, major AI model exfiltration, or large-scale infrastructure attack.
+        - watchcon_trigger: Boolean (true/false) indicating whether this represents a nation-state attack on critical infrastructure, major AI model exfiltration, or large-scale ransomware affecting hospitals or power grids.
+        JSON Output:
+        """
     elif channel == "WEATHER":
         category_desc = 'Choose exactly one from ["EARTHQUAKE", "TYPHOON", "FLOOD", "VOLCANO", "DROUGHT", "WILDFIRE", "WEATHER_ALERT", "DISASTER", "EPIDEMIC"].'
         summary_instruction = "Write a concise 3 to 4 sentence objective summary of the natural disaster/weather event in KOREAN (한국어). Focus ONLY on confirmed facts, locations, and impact. Do NOT include any subjective opinions, predictions, or exaggerated/dramatic tone."
@@ -359,15 +380,21 @@ def process_single_feed(feed, geo_cache):
     valid_geo = {"WAR", "EXPLOSION", "CYBERATTACK", "MILITARY", "DISASTER", "UNREST", "CONFLICT", "AIRSTRIKE", "EVACUATION", "NUCLEAR"}
     valid_eco = {"RECESSSION", "MARKET_CRASH", "INFLATION", "TRADE_WAR", "ENERGY", "TECH_CRISIS"}
     valid_weather = {"EARTHQUAKE", "TYPHOON", "FLOOD", "VOLCANO", "DROUGHT", "WILDFIRE", "WEATHER_ALERT", "DISASTER", "EPIDEMIC"}
+    valid_cyber_ai = {"CYBERATTACK", "DATA_BREACH", "ZERO_DAY", "RANSOMWARE", "AI_INCIDENT", "DEEPFAKE", "MODEL_LEAK", "BOTNET", "ESPIONAGE", "INFRASTRUCTURE_ATTACK"}
 
     if channel == "WEATHER" and category not in valid_weather:
         print(f"⚠️ [WEATHER CATEGORY OVERRIDE] {channel} 카테고리 '{category}'를 'DISASTER'로 강제 치환")
         category = "DISASTER"
 
+    elif channel == "CYBER_AI" and category not in valid_cyber_ai:
+        print(f"⚠️ [CYBER_AI CATEGORY OVERRIDE] 카테고리 '{category}'를 'CYBERATTACK'으로 강제 치환")
+        category = "CYBERATTACK"
+
     is_valid = (
         (channel in ["GEOPOLITICS", "TELEGRAM"] and category in valid_geo) or
         (channel == "ECONOMY" and category in valid_eco) or
-        (channel == "WEATHER" and category in valid_weather)
+        (channel == "WEATHER" and category in valid_weather) or
+        (channel == "CYBER_AI" and category in valid_cyber_ai)
     )
     if not is_valid:
         print(f"🚫 [CATEGORY FILTER] {channel} 기사 제외 (유효하지 않은 카테고리 '{category}'): {title}")
@@ -487,7 +514,11 @@ def process_single_feed(feed, geo_cache):
             verified_sources_json = json.dumps([source], ensure_ascii=False)
             child_feeds_json = json.dumps([new_child], ensure_ascii=False)
 
-            watchcon_trigger_val = 1 if (channel == "TELEGRAM" and severity >= 0.85 and intel_pack.get("watchcon_trigger") is True) else 0
+            watchcon_trigger_val = 1 if (
+                channel in ["TELEGRAM", "CYBER_AI"] and
+                severity >= 0.85 and
+                intel_pack.get("watchcon_trigger") is True
+            ) else 0
 
             cursor.execute("""
                 INSERT OR REPLACE INTO incidents (
@@ -552,6 +583,43 @@ def process_single_feed(feed, geo_cache):
                 conn.commit()
                 print(f"📌 [PINNED INCIDENT] Incident {final_id} has been pinned.")
 
+    # ── CYBER_AI-specific logic (WATCHCON Escalation & Incident Pinning) ────────
+    if channel == "CYBER_AI":
+        # 1. WATCHCON Trigger Check
+        if severity >= 0.85 and intel_pack.get("watchcon_trigger") is True:
+            wc = read_watchcon_file()
+            current_stage = wc.get("stage", 4)
+            if current_stage > 1:
+                new_stage = current_stage - 1
+                now_str = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                try:
+                    with get_db_connection() as conn:
+                        log_id = hashlib.sha256(f"{now_str}_{final_id}_{new_stage}".encode()).hexdigest()
+                        conn.execute("""
+                            INSERT INTO watchcon_log (
+                                id, timestamp, previous_stage, new_stage, trigger_type,
+                                triggered_by_incident_id, incident_title, incident_severity, region, country
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            log_id, now_str, current_stage, new_stage, 'AUTO',
+                            final_id, title, severity, region, coords["country"]
+                        ))
+                        conn.commit()
+                except Exception as e:
+                    print(f"⚠️ [WATCHCON LOG ERROR] {e}")
+                update_watchcon_trigger(new_stage, wc.get("override", False), final_id, now_str)
+                print(f"🔐 [CYBER_AI WATCHCON] Stage escalated to {new_stage} due to incident {final_id}")
+            with get_db_connection() as conn:
+                conn.cursor().execute("UPDATE incidents SET watchcon_trigger = 1 WHERE id = ?", (final_id,))
+                conn.commit()
+
+        # 2. Pinned System Check
+        if severity >= 0.75 or intel_pack.get("pin_worthy") is True:
+            with get_db_connection() as conn:
+                conn.cursor().execute("UPDATE incidents SET pinned = 1 WHERE id = ?", (final_id,))
+                conn.commit()
+                print(f"📌 [CYBER_AI PINNED] Incident {final_id} pinned.")
+
     return article_id, True
 
 # ─── Watchcon auto-adjustment ─────────────────────────────────────────────────
@@ -568,7 +636,9 @@ def adjust_watchcon():
         threat_count = conn.cursor().execute(
             "SELECT COUNT(*) FROM incidents WHERE created_at >= ? AND severity >= 0.5 "
             "AND (category='WAR' OR title LIKE '%explosion%' OR title LIKE '%missile%' "
-            "OR title LIKE '%strike%' OR title LIKE '%airstrike%' OR title LIKE '%war%')",
+            "OR title LIKE '%strike%' OR title LIKE '%airstrike%' OR title LIKE '%war%' "
+            "OR category='CYBERATTACK' OR category='INFRASTRUCTURE_ATTACK' OR category='ZERO_DAY' "
+            "OR title LIKE '%ransomware%' OR title LIKE '%critical infrastructure%')",
             (fifteen_mins_ago,)
         ).fetchone()[0]
 
