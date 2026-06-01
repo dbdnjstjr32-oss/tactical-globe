@@ -45,6 +45,33 @@ for env_file in [".env.local", ".env"]:
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "exaone3.5"
 
+# ─── VRAM idle management (Phase 4.2) ─────────────────────────────────────────
+VRAM_IDLE_TIMEOUT = 300          # seconds (5 min) of inference inactivity → unload
+last_inference_time = time.time()
+model_unloaded = False           # guard so we POST keep_alive=0 only once per idle period
+
+
+def maybe_unload_vram():
+    """Unload the model from the RTX 5070 after VRAM_IDLE_TIMEOUT of inactivity.
+
+    Sends keep_alive=0 to Ollama exactly once per idle period (tracked via
+    model_unloaded) so we never spam the API each loop tick.
+    """
+    global model_unloaded
+    if model_unloaded:
+        return
+    if time.time() - last_inference_time <= VRAM_IDLE_TIMEOUT:
+        return
+    try:
+        payload = json.dumps({"model": MODEL_NAME, "keep_alive": 0}).encode("utf-8")
+        req = urllib.request.Request(OLLAMA_URL, data=payload, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=15) as res:
+            res.read()
+        model_unloaded = True
+        print("[VRAM] Model unloaded from GPU due to 5m idle")
+    except Exception as e:
+        print(f"[VRAM] unload request failed: {e}")
+
 TACTICAL_KNOWN_LOCATIONS = {
     "GAZA": {"lat": 31.5000, "lng": 34.4667, "country": "PALESTINE"},
     "GAZA CITY": {"lat": 31.5000, "lng": 34.4667, "country": "PALESTINE"},
@@ -244,7 +271,12 @@ def process_ai_intel_analysis(article_title, article_summary, channel):
         req_data = json.dumps({"model": MODEL_NAME, "prompt": prompt, "stream": False, "format": "json"}).encode("utf-8")
         req = urllib.request.Request(OLLAMA_URL, data=req_data, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=45) as res:
-            return json.loads(json.loads(res.read().decode("utf-8"))["response"].strip())
+            result = json.loads(json.loads(res.read().decode("utf-8"))["response"].strip())
+        # Mark GPU as active so the idle-unload timer resets
+        global last_inference_time, model_unloaded
+        last_inference_time = time.time()
+        model_unloaded = False
+        return result
     except Exception:
         return None
 
@@ -737,6 +769,7 @@ def run_analyzer():
             if once_mode:
                 print("🧠 [ANALYZER WORKER] Single-pass completed. Exiting.")
                 break
+            maybe_unload_vram()  # free RTX 5070 VRAM after 5m idle
             time.sleep(30)
             continue
 

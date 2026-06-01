@@ -34,7 +34,7 @@ export async function POST(
   try {
     const { id: roomId } = await params;
     const body = await request.json();
-    const { lat: userLat, lng: userLng } = body;
+    const { lat: userLat, lng: userLng, userId } = body;
 
     if (userLat === undefined || userLng === undefined) {
       return NextResponse.json({ error: "GPS_REQUIRED" }, { status: 400 });
@@ -57,6 +57,15 @@ export async function POST(
     const ALLOWED_RADIUS_KM = room.radius_km || 50.0; 
 
     if (distance <= ALLOWED_RADIUS_KM) {
+      // Reward verified on-site presence (Bayesian trust accrual)
+      if (userId) {
+        db.prepare(`
+          UPDATE users
+          SET successful_verifications = COALESCE(successful_verifications, 0) + 1,
+              trust_score = MIN(1.0, COALESCE(trust_score, 0.5) + 0.05)
+          WHERE id = ?
+        `).run(userId);
+      }
       return NextResponse.json({ allowed: true, distance, limit: ALLOWED_RADIUS_KM });
     } else {
       return NextResponse.json({ allowed: false, distance, limit: ALLOWED_RADIUS_KM, error: "OUT_OF_RANGE" }, { status: 403 });

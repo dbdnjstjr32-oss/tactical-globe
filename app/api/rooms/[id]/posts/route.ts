@@ -14,6 +14,16 @@ function getDb() {
   return db;
 }
 
+// Haversine distance (km)
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +32,9 @@ export async function POST(
   try {
     const { id: roomId } = await params;
     const body = await request.json();
-    const { content, userId, username, mediaUrl, lat, lng } = body;
+    const { content, userId, username, mediaUrl, lat, lng, userLat, userLng } = body;
+    const reportLat = userLat !== undefined ? userLat : lat;
+    const reportLng = userLng !== undefined ? userLng : lng;
 
     if (!content || !userId || !username) {
       return NextResponse.json({ error: "MISSING_REQUIRED_FIELDS" }, { status: 400 });
@@ -48,14 +60,25 @@ export async function POST(
     }
 
     const postId = "post_" + crypto.randomUUID().replace(/-/g, "").substring(0, 13);
-    const finalLat = lat !== undefined ? lat : null;
-    const finalLng = lng !== undefined ? lng : null;
+    const finalLat = reportLat !== undefined ? reportLat : null;
+    const finalLng = reportLng !== undefined ? reportLng : null;
+
+    // ── Bayesian spatial-trust: distance to room epicenter + trust gate ──
+    let spatialDistanceKm: number | null = null;
+    let isVerified = 0;
+    const roomGeo = db.prepare("SELECT lat, lng FROM rooms WHERE id = ?").get(roomId) as any;
+    const userRow = db.prepare("SELECT trust_score FROM users WHERE id = ?").get(userId) as any;
+    const trustScore = userRow?.trust_score ?? 0.5;
+    if (roomGeo?.lat != null && roomGeo?.lng != null && finalLat != null && finalLng != null) {
+      spatialDistanceKm = haversineKm(finalLat, finalLng, roomGeo.lat, roomGeo.lng);
+      isVerified = (spatialDistanceKm <= 10 && trustScore > 0.7) ? 1 : 0;
+    }
 
     // 3. Insert post
     db.prepare(`
-      INSERT INTO posts (id, room_id, user_id, content, media_url, lat, lng, trust_score, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0.5, ?)
-    `).run(postId, roomId, userId, content, mediaUrl || null, finalLat, finalLng, nowIso);
+      INSERT INTO posts (id, room_id, user_id, content, media_url, lat, lng, trust_score, created_at, spatial_distance_km, is_verified)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0.5, ?, ?, ?)
+    `).run(postId, roomId, userId, content, mediaUrl || null, finalLat, finalLng, nowIso, spatialDistanceKm, isVerified);
 
     // 4. Update last activity of the room
     db.prepare(`

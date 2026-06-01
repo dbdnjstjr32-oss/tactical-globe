@@ -198,6 +198,22 @@ export default function GlobeMap({
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
+  // Bayesian spatial-trust: incident IDs with at least one verified post
+  const [verifiedIds, setVerifiedIds] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    let active = true
+    const fetchVerified = async () => {
+      try {
+        const res = await fetch("/api/incidents/verified")
+        const data = await res.json()
+        if (active && Array.isArray(data.ids)) setVerifiedIds(new Set(data.ids))
+      } catch {}
+    }
+    fetchVerified()
+    const t = setInterval(fetchVerified, 30000)
+    return () => { active = false; clearInterval(t) }
+  }, [])
+
   const [renderedPopupIncident, setRenderedPopupIncident] = useState<TacticalEvent | null>(null)
   const [isPopupExiting, setIsPopupExiting] = useState(false)
   const [isStyleLoading, setIsStyleLoading] = useState(false)
@@ -302,7 +318,8 @@ export default function GlobeMap({
             type: "Feature",
             properties: {
               id: ev.id,
-              intensity: ev.level === "CRITICAL" ? 1 : ev.level === "ELEVATED" ? 0.6 : 0.3
+              intensity: ev.level === "CRITICAL" ? 1 : ev.level === "ELEVATED" ? 0.6 : 0.3,
+              verified: verifiedIds.has(ev.id) ? 1 : 0
             },
             geometry: {
               type: "Point",
@@ -320,7 +337,8 @@ export default function GlobeMap({
             type: "Feature",
             properties: {
               id: ev.id,
-              intensity: ev.level === "CRITICAL" ? 1 : ev.level === "ELEVATED" ? 0.6 : 0.3
+              intensity: ev.level === "CRITICAL" ? 1 : ev.level === "ELEVATED" ? 0.6 : 0.3,
+              verified: verifiedIds.has(ev.id) ? 1 : 0
             },
             geometry: {
               type: "Point",
@@ -362,6 +380,22 @@ export default function GlobeMap({
       ])
     }
 
+    // Static red glow halo under verified points (no rAF — cheap, pan-safe)
+    if (!map.getLayer("threat-verified-glow")) {
+      map.addLayer({
+        id: "threat-verified-glow",
+        type: "circle",
+        source: "threat-zones",
+        filter: ["==", ["get", "verified"], 1],
+        paint: {
+          "circle-radius": 14,
+          "circle-color": "#ef4444",
+          "circle-opacity": 0.35,
+          "circle-blur": 0.8
+        }
+      })
+    }
+
     if (!map.getLayer("threat-points")) {
       map.addLayer({
         id: "threat-points",
@@ -374,15 +408,20 @@ export default function GlobeMap({
             6, 8,
             12, 12
           ],
-          "circle-color": themeColor,
-          "circle-stroke-color": "#ffffff",
-          "circle-stroke-width": 1.5,
-          "circle-opacity": 0.95,
-          "circle-stroke-opacity": 1.0
+          "circle-color": ["case", ["==", ["get", "verified"], 1], "#ef4444", "rgba(180,180,180,0.3)"],
+          "circle-stroke-color": ["case", ["==", ["get", "verified"], 1], "#ef4444", "#888888"],
+          "circle-stroke-width": ["case", ["==", ["get", "verified"], 1], 2, 1],
+          "circle-opacity": ["case", ["==", ["get", "verified"], 1], 0.95, 0.35],
+          "circle-stroke-opacity": ["case", ["==", ["get", "verified"], 1], 1.0, 0.4]
         }
       })
     } else {
-      map.setPaintProperty("threat-points", "circle-color", themeColor)
+      map.setPaintProperty("threat-points", "circle-color",
+        ["case", ["==", ["get", "verified"], 1], "#ef4444", "rgba(180,180,180,0.3)"])
+      map.setPaintProperty("threat-points", "circle-stroke-color",
+        ["case", ["==", ["get", "verified"], 1], "#ef4444", "#888888"])
+      map.setPaintProperty("threat-points", "circle-opacity",
+        ["case", ["==", ["get", "verified"], 1], 0.95, 0.35])
     }
 
     if (opsMode === "IDLE") {
@@ -394,7 +433,7 @@ export default function GlobeMap({
         map.removeLayer("threejs-orbit-layer")
       }
     }
-  }, [incidents, themeColor, opsMode, showHeatmap])
+  }, [incidents, themeColor, opsMode, showHeatmap, verifiedIds])
 
   useEffect(() => {
     const map = mapRef.current?.getMap?.() || mapRef.current
