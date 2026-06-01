@@ -916,42 +916,44 @@ export default function Home() {
 
           {!isInterceptsCollapsed && (
             <>
-              {/* Region filter */}
+              {/* Region filter — 3 columns × 2 rows */}
               <div
                 style={{
                   padding: "6px 10px",
                   borderBottom: "1px solid rgba(180,210,240,0.05)",
                   background: "rgba(180,210,240,0.01)",
-                  overflowX: "auto",
-                  scrollbarWidth: "none",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "4px",
                 }}
               >
-                <div className="flex gap-1" style={{ minWidth: "max-content" }}>
-                  {REGION_BUTTONS.map((r) => {
-                    const isSelected = selectedRegion === r.id
-                    return (
-                      <button
-                        key={r.id}
-                        onClick={() => handleRegionClick(r.id as any)}
-                        className="cursor-pointer transition-all duration-200"
-                        style={{
-                          fontSize: "7px",
-                          fontWeight: 700,
-                          letterSpacing: "0.10em",
-                          padding: "3px 8px",
-                          border: isSelected ? `1px solid rgba(${themeRgb}, 0.50)` : "1px solid rgba(180,210,240,0.08)",
-                          background: isSelected ? `rgba(${themeRgb}, 0.10)` : "transparent",
-                          color: isSelected ? themeColor : "rgba(180,210,240,0.35)",
-                          fontFamily: "monospace",
-                          boxShadow: isSelected ? `0 0 6px rgba(${themeRgb}, 0.15)` : "none",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {r.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                {REGION_BUTTONS.map((r) => {
+                  const isSelected = selectedRegion === r.id
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => handleRegionClick(r.id as any)}
+                      className="cursor-pointer transition-all duration-200"
+                      style={{
+                        fontSize: "8px",
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        padding: "4px 4px",
+                        border: isSelected ? `1px solid rgba(${themeRgb}, 0.50)` : "1px solid rgba(180,210,240,0.08)",
+                        background: isSelected ? `rgba(${themeRgb}, 0.10)` : "transparent",
+                        color: isSelected ? themeColor : "rgba(180,210,240,0.35)",
+                        fontFamily: "monospace",
+                        boxShadow: isSelected ? `0 0 6px rgba(${themeRgb}, 0.15)` : "none",
+                        textAlign: "center",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {r.label}
+                    </button>
+                  )
+                })}
               </div>
 
               {/* Feed */}
