@@ -156,10 +156,10 @@ def escalate_watchcon(triggered_by, title, severity, region, country):
     return new_stage
 
 
-def promote_to_critical(incident_id):
+def promote_status(incident_id, status="CRITICAL"):
     try:
         with get_db_connection() as conn:
-            conn.execute("UPDATE incidents SET status='CRITICAL' WHERE id=?", (incident_id,))
+            conn.execute("UPDATE incidents SET status=? WHERE id=?", (status, incident_id))
             conn.commit()
     except Exception as e:
         print(f"  [FUSION] status promote error for {incident_id}: {e}")
@@ -230,33 +230,37 @@ def fusion_pass():
 
         # No nearby OSINT → sensor-only baseline weight
         if best is None:
-            w_alert = fusion_score(s_sensor, 0.0, 0.0)
             matched_osint = None
+            t_osint = 0.0
+            # Pre-Alert bypass: severe SIGINT alone uses raw S_sensor (skip 0.6 weight)
+            if s_sensor >= 0.85:
+                w_alert = s_sensor
+            else:
+                w_alert = fusion_score(s_sensor, 0.0, 0.0)
         else:
             w_alert = best["w"]
             matched_osint = best["osint"]
+            t_osint = best["t_osint"]
 
-        if w_alert > W_CRITICAL:
-            tag = matched_osint["region"] if matched_osint else sensor["region"]
-            print(f"  [FUSION] ⚡ W_alert={w_alert:.3f} @ {tag} "
-                  f"(s_sensor={s_sensor:.2f}"
-                  + (f", t_osint={best['t_osint']:.2f}, Δt={best['delta_min']:.1f}min, "
-                     f"{best['dist']:.1f}km)" if best else ", sensor-only)"))
-
-            # Promote matched incidents and escalate WATCHCON
-            promote_to_critical(sensor["id"])
-            if matched_osint:
-                promote_to_critical(matched_osint["id"])
-
+        if w_alert >= W_CRITICAL and t_osint > 0:
+            # ── Confirmed Alert: sensor + OSINT corroboration ──
+            tag = matched_osint["region"]
+            print(f"  [FUSION] ⚡ CONFIRMED W_alert={w_alert:.3f} @ {tag} "
+                  f"(s_sensor={s_sensor:.2f}, t_osint={t_osint:.2f}, "
+                  f"Δt={best['delta_min']:.1f}min, {best['dist']:.1f}km)")
+            promote_status(sensor["id"], "CRITICAL")
+            promote_status(matched_osint["id"], "CRITICAL")
             new_stage = escalate_watchcon(
-                triggered_by=sensor["id"],
-                title=sensor["title"],
-                severity=w_alert,
-                region=(matched_osint["region"] if matched_osint else sensor["region"]),
-                country=(matched_osint["country"] if matched_osint else sensor["country"]),
+                triggered_by=sensor["id"], title=sensor["title"], severity=w_alert,
+                region=matched_osint["region"], country=matched_osint["country"],
             )
             if new_stage is not None:
                 escalations += 1
+        elif w_alert >= W_CRITICAL and t_osint == 0:
+            # ── Pre-Alert: severe SIGINT, no OSINT yet → flag but DON'T escalate WATCHCON ──
+            print(f"  [FUSION] 🛰️ SIGINT PRE-ALERT W_alert={w_alert:.3f} @ {sensor['region']} "
+                  f"(s_sensor={s_sensor:.2f}, awaiting OSINT corroboration)")
+            promote_status(sensor["id"], "HIGH")
 
     print(f"  [FUSION] pass done | sensors={len(sensor_events)} "
           f"osint={len(osint_events)} | escalations={escalations}")

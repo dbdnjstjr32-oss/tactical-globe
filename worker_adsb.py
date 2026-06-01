@@ -32,7 +32,7 @@ from db_utils import get_db_connection
 # ─── Config ───────────────────────────────────────────────────────────────────
 OPENSKY_URL = (
     "https://opensky-network.org/api/states/all"
-    "?lamin=33&lomin=124&lamax=39&lomax=132"  # Korean peninsula + approaches
+    "?lamin=24&lomin=34&lamax=40&lomax=60"  # Middle East (Israel/Iran/Hormuz)
 )
 POLL_INTERVAL = 10          # seconds between polls
 REQUEST_TIMEOUT = 12        # HTTP timeout
@@ -86,6 +86,43 @@ def _normalize(value, threshold, ceiling):
         return 1.0
     frac = abs(value - threshold) / span
     return max(0.0, min(1.0, frac))
+
+
+# ─── Geographical context zones (Middle East) ────────────────────────────────
+GEO_CONTEXT_ZONES = {
+    "SAFE": [   # airports — sharp turns/descents are normal arrivals
+        {"name": "TLV Ben Gurion", "lat": 32.00, "lng": 34.88, "radius_km": 30.0},
+        {"name": "DXB Dubai",      "lat": 25.25, "lng": 55.36, "radius_km": 30.0},
+    ],
+    "CONFLICT": [  # any anomaly here is highly suspicious
+        {"name": "Strait of Hormuz", "lat": 26.56, "lng": 56.25, "radius_km": 100.0},
+        {"name": "Lebanon Border",   "lat": 33.20, "lng": 35.30, "radius_km": 100.0},
+    ],
+}
+SAFE_ZONE_PENALTY = 0.4    # multiply score down inside airport zones
+CONFLICT_ZONE_BONUS = 1.5  # multiply score up inside conflict zones (capped 1.0)
+
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2
+         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def classify_zone(lat, lng):
+    """Return 'SAFE', 'CONFLICT', or None for a coordinate."""
+    if lat is None or lng is None:
+        return None
+    for z in GEO_CONTEXT_ZONES["CONFLICT"]:   # conflict takes precedence
+        if _haversine_km(lat, lng, z["lat"], z["lng"]) <= z["radius_km"]:
+            return "CONFLICT"
+    for z in GEO_CONTEXT_ZONES["SAFE"]:
+        if _haversine_km(lat, lng, z["lat"], z["lng"]) <= z["radius_km"]:
+            return "SAFE"
+    return None
 
 
 def compute_kinematic_score(turn_rate, descent_rate):
@@ -264,10 +301,15 @@ def poll_cycle():
 
                 if turn_rate > TURN_RATE_LIMIT or descent_rate < DESCENT_RATE_LIMIT:
                     score = compute_kinematic_score(turn_rate, descent_rate)
+                    zone = classify_zone(curr["lat"], curr["lng"])
+                    if zone == "SAFE":
+                        score = round(score * SAFE_ZONE_PENALTY, 4)
+                    elif zone == "CONFLICT":
+                        score = round(min(score * CONFLICT_ZONE_BONUS, 1.0), 4)
                     if score >= KINEMATIC_INSERT_THRESHOLD:
                         if insert_anomaly(curr, turn_rate, descent_rate, score):
                             flagged += 1
-                            print(f"  [ADSB] ⚠ {curr['callsign']} score={score} "
+                            print(f"  [ADSB] ⚠ {curr['callsign']} score={score} zone={zone or 'OPEN'} "
                                   f"turn={turn_rate:.1f}°/s descent={descent_rate:.0f}ft/min")
 
         # Update state memory
