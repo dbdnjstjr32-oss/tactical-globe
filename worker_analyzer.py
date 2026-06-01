@@ -426,6 +426,19 @@ def process_single_feed(feed, geo_cache):
         print(f"🚫 [CATEGORY FILTER] {channel} 기사 제외 (유효하지 않은 카테고리 '{category}'): {title}")
         return article_id, False
 
+    # ── 천재지변(natural disaster) → WEATHER 채널로 재분류 ──
+    # GEOPOLITICS/TELEGRAM 채널의 DISASTER 기사 중 자연재해 키워드가 있으면 기상 섹션으로 이동
+    NATURAL_DISASTER_KW = (
+        "earthquake", "quake", "typhoon", "hurricane", "cyclone", "flood",
+        "volcano", "eruption", "wildfire", "tsunami", "landslide", "drought",
+        "지진", "태풍", "허리케인", "홍수", "화산", "산불", "해일", "쓰나미", "가뭄", "산사태",
+    )
+    if channel in ("GEOPOLITICS", "TELEGRAM") and category == "DISASTER":
+        blob = f"{title} {summary}".lower()
+        if any(kw in blob for kw in NATURAL_DISASTER_KW):
+            print(f"🌪️ [RECLASSIFY] 천재지변 감지 → WEATHER 채널로 이동: {title[:50]}")
+            channel = "WEATHER"
+
     region = safe_str(intel_pack.get("region", "UNKNOWN")).upper().strip()
     if re.search(r'[가-힣]', region) or len(region) >= 30:
         region = safe_str(intel_pack.get("country", "GLOBAL")).upper().strip()

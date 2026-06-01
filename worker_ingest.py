@@ -114,6 +114,7 @@ CYBER_AI_RSS_SOURCES = [
     "https://www.theverge.com/rss/index.xml",
     "https://www.darkreading.com/rss.xml",
     "https://krebsonsecurity.com/feed/",
+    "https://threatpost.com/feed/",
 ]
 
 CYBER_AI_TELEGRAM_SOURCES = [
@@ -1297,7 +1298,6 @@ def run_ingestor():
             print("🔄 [INGEST] Fetching NEWS RSS feeds...")
             geo_feeds      = fetch_rss_sources(GEOPOLITICS_SOURCES)
             mil_feeds      = fetch_rss_sources(MILITARY_SOURCES)
-            cyber_feeds    = fetch_rss_sources(CYBER_SOURCES)
             health_feeds   = fetch_rss_sources(HEALTH_SOURCES)
             eco_feeds      = fetch_rss_sources(ECONOMY_SOURCES)
             cyber_ai_feeds = fetch_rss_sources(CYBER_AI_RSS_SOURCES)
@@ -1305,7 +1305,6 @@ def run_ingestor():
             all_rss_channel_feeds = [
                 ("GEOPOLITICS", geo_feeds,      TACTICAL_KEYWORDS,  FILTER_THRESHOLD),
                 ("GEOPOLITICS", mil_feeds,      MILITARY_KEYWORDS,  FILTER_THRESHOLD),
-                ("GEOPOLITICS", cyber_feeds,    CYBER_KEYWORDS,     FILTER_THRESHOLD),
                 ("GEOPOLITICS", health_feeds,   HEALTH_KEYWORDS,    4),
                 ("ECONOMY",     eco_feeds,      ECONOMY_KEYWORDS,   3),
                 ("CYBER_AI",    cyber_ai_feeds, CYBER_AI_KEYWORDS,  4),
