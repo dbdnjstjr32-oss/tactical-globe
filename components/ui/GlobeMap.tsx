@@ -694,9 +694,12 @@ export default function GlobeMap({
                       />
                     ) : (
                       <img
-                        src={renderedPopupIncident.media_url}
+                        src={`/api/media-proxy?url=${encodeURIComponent(renderedPopupIncident.media_url)}`}
                         alt="Tactical Recon"
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
                         className="w-full h-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none" }}
                       />
                     )
                   ) : (

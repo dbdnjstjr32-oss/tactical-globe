@@ -352,6 +352,43 @@ def get_source_name(url):
             return name
     return "RAW"
 
+# ─── RSS media extraction (Media RSS / enclosure) ────────────────────────────
+_IMG_EXT_RE = re.compile(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", re.IGNORECASE)
+
+
+def extract_media_url(item_xml):
+    """Pull a representative image URL from an RSS <item>.
+
+    Tries <media:content>, <media:thumbnail>, then <enclosure>. Returns a URL
+    only if it is https and has an allowed image extension (jpg/png/webp/gif).
+    SVG and non-https are rejected (safety). Returns None if nothing valid.
+    """
+    if not item_xml:
+        return None
+    candidates = []
+    # Media RSS: <media:content url="..." medium="image" type="image/*">
+    for m in re.finditer(r"<media:content\b[^>]*\burl=[\"']([^\"']+)[\"'][^>]*>", item_xml, re.IGNORECASE):
+        candidates.append(m.group(1))
+    # <media:thumbnail url="...">
+    for m in re.finditer(r"<media:thumbnail\b[^>]*\burl=[\"']([^\"']+)[\"']", item_xml, re.IGNORECASE):
+        candidates.append(m.group(1))
+    # <enclosure url="..." type="image/*">
+    for m in re.finditer(r"<enclosure\b[^>]*\burl=[\"']([^\"']+)[\"'][^>]*>", item_xml, re.IGNORECASE):
+        tag = m.group(0)
+        if "image" in tag.lower() or _IMG_EXT_RE.search(m.group(1)):
+            candidates.append(m.group(1))
+
+    for raw in candidates:
+        url = html.unescape(raw).strip()
+        if not url.lower().startswith("https://"):
+            continue            # reject http / mixed-content
+        if ".svg" in url.lower():
+            continue            # reject scriptable SVG
+        if _IMG_EXT_RE.search(url):
+            return url
+    return None
+
+
 def fetch_rss_sources(sources):
     raw_articles = []
     
@@ -456,12 +493,15 @@ def fetch_rss_sources(sources):
                         summary = re.sub(r"<[^>]*>", "", summary)
                         summary = html.unescape(summary).replace("\n", " ")
                     pub_date = parse_pub_date(pub_m.group(1) if pub_m else None)
+                    media_url = extract_media_url(item)
                     raw_articles.append({
                         "title": title,
                         "link": link,
                         "summary": summary if summary else title,
                         "source": source_name,
-                        "pub_date": pub_date
+                        "pub_date": pub_date,
+                        "media_url": media_url,
+                        "media_type": "image" if media_url else None
                     })
         except Exception:
             continue
@@ -1292,13 +1332,14 @@ def run_ingestor():
                         ):
                             continue
                         cursor.execute("""
-                            INSERT INTO raw_feeds (id, channel, title, link, summary, source, pub_date, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO raw_feeds (id, channel, title, link, summary, source, pub_date, created_at, media_url, media_type)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, (
                             article_hash, channel,
                             feed["title"], feed["link"], feed["summary"],
                             feed["source"], feed["pub_date"],
-                            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                            feed.get("media_url"), feed.get("media_type")
                         ))
                         inserted += 1
                 conn.commit()

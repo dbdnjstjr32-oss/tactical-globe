@@ -434,12 +434,17 @@ def process_single_feed(feed, geo_cache):
     if not coords:
         coords = TACTICAL_KNOWN_LOCATIONS["GLOBAL"]
 
-    # ── X Media lookup ────────────────────────────────────────────────────────
+    # ── Media: X (SNS) first, else RSS-extracted article image ─────────────────
     media_url, media_type, sns_source = None, None, None
     if channel in ["GEOPOLITICS", "TELEGRAM"]:
         media_url, media_type = search_x_media(region, intel_pack.get("category", "WAR"))
         if media_url:
             sns_source = "X"
+    # Fallback to the article's own image carried from RSS ingest
+    if not media_url and feed.get("media_url"):
+        media_url = feed.get("media_url")
+        media_type = feed.get("media_type") or "image"
+        sns_source = feed.get("source") or "RSS"
 
     # ── Deduplication & Merge ─────────────────────────────────────────────────
     two_hours_ago = (

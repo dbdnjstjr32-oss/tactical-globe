@@ -1154,6 +1154,31 @@ export default function Home() {
               {displayTitle}
             </div>
 
+            {/* Media preview (image via safe proxy, video direct from SNS) */}
+            {currentTarget?.media_url && (
+              <div style={{ position: "relative", width: "100%", height: "120px", background: "#000", border: "1px solid rgba(180,210,240,0.08)", overflow: "hidden" }}>
+                {currentTarget.media_type === "video" ? (
+                  <video
+                    src={currentTarget.media_url}
+                    muted loop playsInline autoPlay
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <img
+                    src={`/api/media-proxy?url=${encodeURIComponent(currentTarget.media_url)}`}
+                    alt="source media"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => { const el = e.currentTarget.parentElement as HTMLElement | null; if (el) el.style.display = "none" }}
+                  />
+                )}
+                <span style={{ position: "absolute", bottom: "3px", right: "4px", fontSize: "7px", padding: "1px 4px", background: "rgba(0,0,0,0.7)", color: "rgba(180,210,240,0.6)", fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  {currentTarget.sns_source || "MEDIA"}
+                </span>
+              </div>
+            )}
+
             {/* Summary */}
             <div
               style={{
