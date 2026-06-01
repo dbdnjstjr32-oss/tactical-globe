@@ -584,10 +584,11 @@ export default function Home() {
         const { latitude: lat, longitude: lng } = position.coords
         setAuthUI(prev => ({ ...prev, status: "verifying", logs: [...prev.logs, `[GPS] 좌표 획득: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, "[SERVER] 작전 반경 검증 중..."] }))
         try {
+          const userId = (typeof window !== "undefined" && localStorage.getItem("user_id")) || undefined
           const res = await fetch(`/api/rooms/${targetRoom.id}/verify`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat, lng })
+            body: JSON.stringify({ lat, lng, userId })
           })
           const data = await res.json()
           if (data.allowed) {
