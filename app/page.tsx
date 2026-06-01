@@ -267,6 +267,7 @@ export default function Home() {
   const [activeChildFeedTab, setActiveChildFeedTab] = useState<number>(0)
   const [isMinimalTactical, setIsMinimalTactical] = useState<boolean>(false)
   const [isInterceptsCollapsed, setIsInterceptsCollapsed] = useState<boolean>(false)
+  const [focusMode, setFocusMode] = useState<boolean>(false)
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [selectedChannel, setSelectedChannel] = useState<"GEOPOLITICS"|"ECONOMY"|"WEATHER"|"CYBER_AI">("GEOPOLITICS")
@@ -843,13 +844,16 @@ export default function Home() {
               <div style={{ fontSize: "13px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>{fps}<span style={{ fontSize: "9px", color: "#4d7898" }}> fps</span></div>
             </div>
 
-            <div
-              className="flex items-center gap-1.5"
+            <button
+              onClick={() => setFocusMode(f => !f)}
+              title="Toggle focus / briefing popup mode"
+              className="flex items-center gap-1.5 cursor-pointer transition-all duration-200"
               style={{
                 padding: "5px 11px",
                 borderRadius: "3px",
-                border: `1px solid rgba(${themeRgb}, 0.20)`,
-                background: `rgba(${themeRgb}, 0.05)`,
+                border: focusMode ? `1px solid ${themeColor}` : `1px solid rgba(${themeRgb}, 0.20)`,
+                background: focusMode ? `rgba(${themeRgb}, 0.16)` : `rgba(${themeRgb}, 0.05)`,
+                boxShadow: focusMode ? `0 0 10px rgba(${themeRgb}, 0.25)` : "none",
               }}
             >
               <div
@@ -860,15 +864,22 @@ export default function Home() {
                 }}
               />
               <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", color: isLoading ? "#f59e0b" : themeColor, fontFamily: "system-ui, -apple-system, sans-serif" }}>
-                {isLoading ? "SYNC" : isAutoPilot ? "AUTO" : "MANUAL"}
+                {focusMode ? "FOCUS" : isLoading ? "SYNC" : isAutoPilot ? "AUTO" : "MANUAL"}
               </span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
 
       {/* ── LEFT COLUMN ───────────────────────────────────── */}
-      <div className="absolute left-5 top-20 bottom-12 w-[282px] z-30 flex flex-col gap-2.5 pointer-events-none">
+      <div
+        className="absolute left-5 top-20 bottom-12 w-[282px] z-30 flex flex-col gap-2.5 pointer-events-none"
+        style={{
+          transition: "transform 0.5s ease, opacity 0.5s ease",
+          transform: focusMode ? "translateX(-130%)" : "translateX(0)",
+          opacity: focusMode ? 0 : 1,
+        }}
+      >
 
         {/* INTEL INTERCEPTS */}
         <div
@@ -1034,7 +1045,14 @@ export default function Home() {
       </div>
 
       {/* ── RIGHT COLUMN ──────────────────────────────────── */}
-      <div className="absolute right-5 top-20 bottom-12 w-[306px] z-30 flex flex-col gap-2.5 pointer-events-none">
+      <div
+        className="absolute right-5 top-20 bottom-12 w-[306px] z-30 flex flex-col gap-2.5 pointer-events-none"
+        style={{
+          transition: "transform 0.5s ease, opacity 0.5s ease",
+          transform: focusMode ? "translateX(130%)" : "translateX(0)",
+          opacity: focusMode ? 0 : 1,
+        }}
+      >
 
         {/* WATCHCON */}
         <div className="pointer-events-auto shrink-0">
@@ -1339,6 +1357,66 @@ export default function Home() {
           {showFeedback ? "CLOSE FEEDBACK" : "BETA FEEDBACK"}
         </button>
       </div>
+
+      {/* ── FOCUS MODE: INTELLIGENCE BRIEFING POPUP ───────── */}
+      {focusMode && (
+        <div
+          className="absolute left-1/2 top-1/2 z-40 pointer-events-auto"
+          style={{
+            transform: "translate(-50%, -50%)",
+            width: "min(560px, 86vw)",
+            background: "rgba(4,8,16,0.96)",
+            border: `1px solid rgba(${themeRgb}, 0.30)`,
+            borderRadius: "4px",
+            boxShadow: `0 0 50px rgba(0,0,0,0.7), 0 0 24px rgba(${themeRgb}, 0.10)`,
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div style={{ height: "2px", background: `linear-gradient(90deg, transparent, ${themeColor}, transparent)`, opacity: 0.8 }} />
+          <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+            {/* Header row */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: themeColor, boxShadow: `0 0 6px ${themeColor}`, animation: "beacon 2.4s ease-out infinite" }} />
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", color: "#4d7898", textTransform: "uppercase", fontFamily: "system-ui, sans-serif" }}>
+                  Intelligence Briefing
+                </span>
+              </div>
+              <button
+                onClick={() => setFocusMode(false)}
+                style={{ fontSize: "15px", color: "rgba(180,210,240,0.40)", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#d4e2f0")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(180,210,240,0.40)")}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Timeline */}
+            <div
+              suppressHydrationWarning
+              style={{ fontSize: "9px", color: `rgba(${themeRgb}, 0.7)`, fontFamily: "monospace", letterSpacing: "0.08em", borderLeft: `2px solid rgba(${themeRgb}, 0.35)`, paddingLeft: "8px" }}
+            >
+              TIMELINE // {mounted ? formatKstDate(currentTarget?.created_at) : "REALTIME"}
+            </div>
+
+            {/* Title */}
+            <div style={{ fontSize: "17px", fontWeight: 700, color: "#e2eaf4", fontFamily: "system-ui, sans-serif", lineHeight: 1.4 }}>
+              {displayTitle}
+            </div>
+
+            {/* Source */}
+            <div style={{ fontSize: "10px", color: "rgba(180,210,240,0.45)", fontFamily: "monospace", letterSpacing: "0.06em" }}>
+              SOURCE: <span style={{ color: themeColor, fontWeight: 700 }}>{displaySource}</span>
+            </div>
+
+            {/* Korean briefing */}
+            <div style={{ fontSize: "14px", color: "#9bbdd4", lineHeight: 1.75, fontFamily: "system-ui, sans-serif", paddingTop: "12px", borderTop: `1px solid rgba(${themeRgb}, 0.12)` }}>
+              {displaySummary}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
 
     {/* ── CONSENT MODAL ─────────────────────────────────── */}
