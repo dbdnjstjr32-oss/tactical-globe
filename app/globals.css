@@ -215,6 +215,17 @@
 .glitch-popup-enter { animation: glitch-anim-in 0.4s ease-out forwards; }
 .glitch-popup-exit  { animation: glitch-anim-out 0.4s ease-in forwards; }
 
+/* ── BRIEFING FLIP-IN (news transition) ─────────────────── */
+@keyframes briefing-flip {
+  0%   { opacity: 0; transform: perspective(700px) rotateX(-22deg) translateY(10px); filter: blur(2px); }
+  55%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: perspective(700px) rotateX(0deg) translateY(0); filter: blur(0); }
+}
+.briefing-flip {
+  animation: briefing-flip 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform-origin: top center;
+}
+
 /* ── SLIDE BAR (loading indicator) ─────────────────────── */
 @keyframes slide-bar {
   0%   { left: -30%; }

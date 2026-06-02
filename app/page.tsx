@@ -279,7 +279,7 @@ export default function Home() {
     if (coords && mapRef.current) {
       const map = mapRef.current.getMap?.() || mapRef.current
       if (map && typeof map.flyTo === "function") {
-        map.flyTo({ center: coords.center, zoom: coords.zoom, duration: 1500, essential: true })
+        map.flyTo({ center: coords.center, zoom: coords.zoom, duration: 2000, essential: true })
       }
     }
   }
@@ -430,7 +430,7 @@ export default function Home() {
                 const map = mapRef.current?.getMap?.() || mapRef.current
                 if (map && typeof map.flyTo === "function") {
                   map.stop()
-                  map.flyTo({ center: [data[0].lng, data[0].lat], zoom: 5.5, pitch: 20, bearing: 20, speed: 1.2, essential: true })
+                  map.flyTo({ center: [data[0].lng, data[0].lat], zoom: 5.5, pitch: 20, bearing: 20, speed: 0.95, essential: true })
                 }
               }
             }
@@ -482,7 +482,7 @@ export default function Home() {
       if (currentNews) {
         setCurrentTarget(currentNews)
         if (map && typeof map.flyTo === "function") {
-          map.flyTo({ center: [currentNews.lng, currentNews.lat], zoom: 4.8, pitch: 20, bearing: -10, speed: 0.8, essential: true })
+          map.flyTo({ center: [currentNews.lng, currentNews.lat], zoom: 4.8, pitch: 20, bearing: -10, speed: 0.6, essential: true })
         }
         setStreamLogs(prev => [`[LOCK] [${currentNews.level}] ${currentNews.region} — ${currentNews.country} [${currentIndex + 1}/${displayIncidents.length}]`, ...prev.slice(0, 7)])
       }
@@ -495,7 +495,7 @@ export default function Home() {
       const targetLng = currentNews?.lng ?? 126.9780
       const targetLat = currentNews?.lat ?? 37.5665
       if (map && typeof map.flyTo === "function") {
-        map.flyTo({ center: [targetLng, targetLat], zoom: 2.2, pitch: 0, bearing: 0, speed: 0.6, essential: true })
+        map.flyTo({ center: [targetLng, targetLat], zoom: 2.2, pitch: 0, bearing: 0, speed: 0.45, essential: true })
       }
       setStreamLogs(prev => [`[IDLE] ORBITAL SURVEY MODE // 30S PATROL`, ...prev.slice(0, 7)])
       timer = setTimeout(() => {
@@ -528,7 +528,7 @@ export default function Home() {
     const map = mapRef.current?.getMap?.() || mapRef.current
     if (map && typeof map.flyTo === "function") {
       map.stop()
-      map.flyTo({ center: [target.lng, target.lat], zoom: 4.8, speed: 1.1, essential: true })
+      map.flyTo({ center: [target.lng, target.lat], zoom: 4.8, speed: 0.85, essential: true })
       setCurrentTarget(target)
       setStreamLogs(prev => [`[MANUAL] LOCKED ONTO [${target.source || "RAW"}] ${target.region}`, ...prev.slice(0, 7)])
     }
@@ -1363,17 +1363,20 @@ export default function Home() {
         <div
           className="absolute left-1/2 top-1/2 z-40 pointer-events-auto"
           style={{
-            transform: "translate(-50%, -50%)",
-            width: "min(560px, 86vw)",
+            transform: "translate(-50%, calc(-100% - 44px))",
+            width: "min(400px, 84vw)",
             background: "rgba(4,8,16,0.96)",
             border: `1px solid rgba(${themeRgb}, 0.30)`,
-            borderRadius: "4px",
+            borderRadius: "14px",
             boxShadow: `0 0 50px rgba(0,0,0,0.7), 0 0 24px rgba(${themeRgb}, 0.10)`,
             backdropFilter: "blur(16px)",
           }}
         >
-          <div style={{ height: "2px", background: `linear-gradient(90deg, transparent, ${themeColor}, transparent)`, opacity: 0.8 }} />
-          <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div
+            key={currentTarget?.id || "none"}
+            className="briefing-flip"
+            style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px" }}
+          >
             {/* Header row */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
