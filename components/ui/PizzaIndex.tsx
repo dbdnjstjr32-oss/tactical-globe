@@ -44,7 +44,7 @@ export default function PizzaIndex() {
     }
 
     fetchPizzaIndex()
-    const pizzaInterval = setInterval(fetchPizzaIndex, 60000)
+    const pizzaInterval = setInterval(fetchPizzaIndex, 5000)  // align with 5s fast loop
     return () => clearInterval(pizzaInterval)
   }, [])
 
@@ -190,7 +190,7 @@ export default function PizzaIndex() {
                   pizzint.watch ↗
                 </a>
                 <span className="text-[7px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
-                  AUTO-REFRESH 1MIN
+                  AUTO-REFRESH 5S · INDEPENDENT
                 </span>
               </div>
             </>

@@ -1,11 +1,25 @@
+export const dynamic = "force-dynamic"
+
 import { NextResponse } from "next/server"
 
 // 🍕 Pentagon Pizza Index Proxy API
 // pizzint.watch는 Next.js SSR 기반 — 서버에서 HTML 긁어 파싱
+// 의도적으로 우리 WATCHCON과 독립된 OSINT 교차참조 지표 (블렌딩 안 함)
 
 let cachedData: any = null;
 let cacheTime: number = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5분
+const CACHE_TTL = 30 * 1000; // 30초 — 외부 pizzint 갱신을 빠르게 반영
+
+const LEVEL_COLOR: Record<number, string> = {
+  1: "#ff0055", 2: "#ff6600", 3: "#ffdd00", 4: "#00d2ff", 5: "#00ff88",
+}
+const LEVEL_DESC: Record<number, string> = {
+  1: "MAXIMUM ALERT — CRISIS IMMINENT",
+  2: "ELEVATED — SIGNIFICANT ACTIVITY",
+  3: "HEIGHTENED — UNUSUAL PATTERNS",
+  4: "DOUBLE TAKE · INTELLIGENCE WATCH",
+  5: "NORMAL — ROUTINE ACTIVITY",
+}
 
 async function fetchPizzaIndex() {
   const controller = new AbortController()
@@ -62,76 +76,44 @@ function parsePizzaHtml(html: string) {
   const statusMatch = html.match(/\bOPERATIONAL\b|\bDEGRADED\b|\bOFFLINE\b/i)
   const status = statusMatch ? statusMatch[0].toUpperCase() : "OPERATIONAL"
 
-  // DOUGHCON 색상 매핑 (pizzint 원본 사이트 색상 참조)
-  const levelColorMap: Record<number, string> = {
-    1: "#ff0055",  // RED ALERT
-    2: "#ff6600",  // ORANGE
-    3: "#ffdd00",  // YELLOW
-    4: "#00d2ff",  // BLUE (현재)
-    5: "#00ff88",  // GREEN
-  }
-
-  // DOUGHCON 레벨별 설명 폴백
-  const levelDescMap: Record<number, string> = {
-    1: "MAXIMUM ALERT — CRISIS IMMINENT",
-    2: "ELEVATED — SIGNIFICANT ACTIVITY",
-    3: "HEIGHTENED — UNUSUAL PATTERNS",
-    4: "DOUBLE TAKE · INTELLIGENCE WATCH",
-    5: "NORMAL — ROUTINE ACTIVITY",
-  }
-
   return {
     doughconLevel,
-    doughconDesc: doughconDesc || (doughconLevel ? levelDescMap[doughconLevel] : "MONITORING"),
+    doughconDesc: doughconDesc || (doughconLevel ? LEVEL_DESC[doughconLevel] : "MONITORING"),
     alertText,
     locationsMonitored,
     reportsCount,
     alertsCount,
     accountsMonitored,
     status,
-    color: doughconLevel ? (levelColorMap[doughconLevel] ?? "#00d2ff") : "#00d2ff",
+    color: doughconLevel ? (LEVEL_COLOR[doughconLevel] ?? "#00d2ff") : "#00d2ff",
     lastUpdated: new Date().toISOString(),
   }
 }
 
 export async function GET() {
   const now = Date.now();
+  const NO_STORE = { "Cache-Control": "no-store, max-age=0" };
 
-  // 1. Check if cache is still valid
+  // 1. Serve fresh-enough cache (30s TTL)
   if (cachedData && now - cacheTime < CACHE_TTL) {
-    return NextResponse.json({ ...cachedData, cached: true }, {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      }
-    });
+    return NextResponse.json({ ...cachedData, cached: true }, { headers: NO_STORE });
   }
 
+  // 2. Re-scrape pizzint (independent OSINT indicator — no WATCHCON blending)
   try {
-    const html = await fetchPizzaIndex();
-    const parsed = parsePizzaHtml(html);
-    
-    // Update cache
+    const parsed = parsePizzaHtml(await fetchPizzaIndex());
     cachedData = parsed;
     cacheTime = now;
-    
-    return NextResponse.json({ ...parsed, cached: false }, {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      }
-    });
+    return NextResponse.json({ ...parsed, cached: false }, { headers: NO_STORE });
   } catch (err: any) {
     console.error("Pizza fetch failed, checking fallback cache:", err);
-    
-    // 2. Stale cache fallback if fetch fails
+
+    // 3. Stale cache fallback
     if (cachedData) {
-      return NextResponse.json({ ...cachedData, cached: true }, {
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        }
-      });
+      return NextResponse.json({ ...cachedData, cached: true }, { headers: NO_STORE });
     }
-    
-    // 3. Complete fallback if no cache exists
+
+    // 4. Hard fallback
     return NextResponse.json({
       doughconLevel: null,
       doughconDesc: "SIGNAL LOST",
@@ -145,6 +127,6 @@ export async function GET() {
       lastUpdated: new Date().toISOString(),
       error: err?.message || "FETCH_FAILED",
       cached: false,
-    }, { status: 200 }); // Keep 200 so front-end does not crash
+    }, { status: 200, headers: NO_STORE });
   }
 }
