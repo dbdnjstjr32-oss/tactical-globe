@@ -44,6 +44,14 @@ for env_file in [".env.local", ".env"]:
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "exaone3.5"
+LLM_TIMEOUT = 120          # exaone3.5 inference takes 27~47s/item; 45s was too tight and caused timeouts
+MAX_ANALYZE_RETRIES = 3    # after this many LLM failures a feed is dead-lettered (status='FAILED') so it can't block the queue head
+
+# ─── WATCHCON anti-flap ───────────────────────────────────────────────────────
+# adjust_watchcon() is the single source of truth for the auto WATCHCON stage.
+# Escalations (more severe) apply immediately; a de-escalation only applies after
+# the stage has held for this many seconds, so the level can't ping-pong.
+WATCHCON_DEESCALATE_DWELL = 300  # seconds (5 min)
 
 # ─── VRAM idle management (Phase 4.2) ─────────────────────────────────────────
 VRAM_IDLE_TIMEOUT = 300          # seconds (5 min) of inference inactivity → unload
@@ -270,14 +278,15 @@ def process_ai_intel_analysis(article_title, article_summary, channel):
     try:
         req_data = json.dumps({"model": MODEL_NAME, "prompt": prompt, "stream": False, "format": "json"}).encode("utf-8")
         req = urllib.request.Request(OLLAMA_URL, data=req_data, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=45) as res:
+        with urllib.request.urlopen(req, timeout=LLM_TIMEOUT) as res:
             result = json.loads(json.loads(res.read().decode("utf-8"))["response"].strip())
         # Mark GPU as active so the idle-unload timer resets
         global last_inference_time, model_unloaded
         last_inference_time = time.time()
         model_unloaded = False
         return result
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ [LLM ERROR] {type(e).__name__}: {e}")
         return None
 
 # ─── Geocoding (thread-safe cache access) ─────────────────────────────────────
@@ -589,33 +598,10 @@ def process_single_feed(feed, geo_cache):
     # ── TELEGRAM-specific logic (WATCHCON Escalation & Incident Pinning) ──────
     final_id = node_id if matched_node else article_id
     if channel == "TELEGRAM":
-        # 1. WATCHCON Trigger Check
+        # 1. WATCHCON Trigger Check — only flag this incident as watchcon-relevant.
+        #    The actual stage is computed centrally by adjust_watchcon() (single
+        #    source of truth + hysteresis) to prevent escalate/reset flapping.
         if severity >= 0.85 and intel_pack.get("watchcon_trigger") is True:
-            wc = read_watchcon_file()
-            current_stage = wc.get("stage", 4)
-            if current_stage > 1:
-                new_stage = current_stage - 1
-                now_str = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-                
-                # Log the auto-trigger event
-                try:
-                    with get_db_connection() as conn:
-                        log_id = hashlib.sha256(f"{now_str}_{final_id}_{new_stage}".encode()).hexdigest()
-                        conn.execute("""
-                            INSERT INTO watchcon_log (
-                                id, timestamp, previous_stage, new_stage, trigger_type,
-                                triggered_by_incident_id, incident_title, incident_severity, region, country
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            log_id, now_str, current_stage, new_stage, 'AUTO',
-                            final_id, title, severity, region, coords["country"]
-                        ))
-                        conn.commit()
-                except Exception as e:
-                    print(f"⚠️ [WATCHCON LOG ERROR] {e}")
-
-                update_watchcon_trigger(new_stage, wc.get("override", False), final_id, now_str)
-                print(f"📡 [WATCHCON TRIGGERED] Stage escalated to {new_stage} due to incident {final_id}")
             with get_db_connection() as conn:
                 conn.cursor().execute("UPDATE incidents SET watchcon_trigger = 1 WHERE id = ?", (final_id,))
                 conn.commit()
@@ -629,30 +615,9 @@ def process_single_feed(feed, geo_cache):
 
     # ── CYBER_AI-specific logic (WATCHCON Escalation & Incident Pinning) ────────
     if channel == "CYBER_AI":
-        # 1. WATCHCON Trigger Check
+        # 1. WATCHCON Trigger Check — only flag this incident as watchcon-relevant.
+        #    Stage is computed centrally by adjust_watchcon() (anti-flap).
         if severity >= 0.85 and intel_pack.get("watchcon_trigger") is True:
-            wc = read_watchcon_file()
-            current_stage = wc.get("stage", 4)
-            if current_stage > 1:
-                new_stage = current_stage - 1
-                now_str = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-                try:
-                    with get_db_connection() as conn:
-                        log_id = hashlib.sha256(f"{now_str}_{final_id}_{new_stage}".encode()).hexdigest()
-                        conn.execute("""
-                            INSERT INTO watchcon_log (
-                                id, timestamp, previous_stage, new_stage, trigger_type,
-                                triggered_by_incident_id, incident_title, incident_severity, region, country
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            log_id, now_str, current_stage, new_stage, 'AUTO',
-                            final_id, title, severity, region, coords["country"]
-                        ))
-                        conn.commit()
-                except Exception as e:
-                    print(f"⚠️ [WATCHCON LOG ERROR] {e}")
-                update_watchcon_trigger(new_stage, wc.get("override", False), final_id, now_str)
-                print(f"🔐 [CYBER_AI WATCHCON] Stage escalated to {new_stage} due to incident {final_id}")
             with get_db_connection() as conn:
                 conn.cursor().execute("UPDATE incidents SET watchcon_trigger = 1 WHERE id = ?", (final_id,))
                 conn.commit()
@@ -679,9 +644,11 @@ def adjust_watchcon():
     with get_db_connection() as conn:
         threat_count = conn.cursor().execute(
             "SELECT COUNT(*) FROM incidents WHERE created_at >= ? AND severity >= 0.5 "
-            "AND (category='WAR' OR title LIKE '%explosion%' OR title LIKE '%missile%' "
+            "AND (watchcon_trigger=1 OR category='WAR' OR category='MILITARY' "
+            "OR category='EXPLOSION' OR category='CYBERATTACK' "
+            "OR category='INFRASTRUCTURE_ATTACK' OR category='ZERO_DAY' "
+            "OR title LIKE '%explosion%' OR title LIKE '%missile%' "
             "OR title LIKE '%strike%' OR title LIKE '%airstrike%' OR title LIKE '%war%' "
-            "OR category='CYBERATTACK' OR category='INFRASTRUCTURE_ATTACK' OR category='ZERO_DAY' "
             "OR title LIKE '%ransomware%' OR title LIKE '%critical infrastructure%')",
             (fifteen_mins_ago,)
         ).fetchone()[0]
@@ -689,7 +656,25 @@ def adjust_watchcon():
     stage = watchcon.get("stage", 4)
     new_stage = 1 if threat_count >= 5 else 2 if threat_count >= 3 else 3 if threat_count >= 1 else 4
 
-    if new_stage != stage:
+    if new_stage == stage:
+        return
+
+    # ── Anti-flap hysteresis: escalate immediately, de-escalate only after dwell ──
+    # Lower stage number = more severe. A de-escalation (less severe) is held back
+    # until the current stage has lasted WATCHCON_DEESCALATE_DWELL seconds, so the
+    # level can't ping-pong when the threat query hovers near a threshold.
+    if new_stage > stage:
+        try:
+            last_ts = watchcon.get("timestamp")
+            if last_ts:
+                last_dt = datetime.fromisoformat(last_ts.replace("Z", "+00:00"))
+                elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()
+                if elapsed < WATCHCON_DEESCALATE_DWELL:
+                    return  # hold the higher alert until the dwell window passes
+        except Exception:
+            pass
+
+    if True:
         # Log the auto-trigger event from threat count
         try:
             now_str = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -750,6 +735,12 @@ def run_analyzer():
             print("🔧 [DB MIGRATION] Added 'watchcon_trigger' column to archived_news table.")
         except sqlite3.OperationalError:
             pass
+        try:
+            conn.execute("ALTER TABLE raw_feeds ADD COLUMN retry_count INTEGER DEFAULT 0")
+            conn.commit()
+            print("🔧 [DB MIGRATION] Added 'retry_count' column to raw_feeds table.")
+        except sqlite3.OperationalError:
+            pass
 
         try:
             conn.execute("""
@@ -779,7 +770,8 @@ def run_analyzer():
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             pending_feeds = cursor.execute(
-                "SELECT * FROM raw_feeds WHERE status='PENDING' LIMIT 3"
+                "SELECT * FROM raw_feeds WHERE status='PENDING' "
+                "ORDER BY retry_count ASC, rowid ASC LIMIT 3"
             ).fetchall()
 
         if not pending_feeds:
@@ -800,12 +792,24 @@ def run_analyzer():
             for future in concurrent.futures.as_completed(futures):
                 try:
                     article_id, success = future.result()
-                    if success is not None:
-                        with get_db_connection() as conn:
-                            conn.cursor().execute(
+                    with get_db_connection() as conn:
+                        if success is not None:
+                            # success True (incident created) or False (category-filtered) → fully handled
+                            conn.execute(
                                 "UPDATE raw_feeds SET status='PROCESSED' WHERE id=?", (article_id,)
                             )
-                            conn.commit()
+                        else:
+                            # LLM returned nothing (timeout/parse fail) → bump retry; dead-letter once
+                            # it exceeds MAX_ANALYZE_RETRIES so a poison item can't block the queue head.
+                            conn.execute(
+                                "UPDATE raw_feeds SET retry_count = retry_count + 1, "
+                                "status = CASE WHEN retry_count + 1 >= ? THEN 'FAILED' ELSE status END "
+                                "WHERE id=?",
+                                (MAX_ANALYZE_RETRIES, article_id),
+                            )
+                            print(f"⚠️ [ANALYZER] No LLM result for {article_id} → retry bumped "
+                                  f"(dead-letters at {MAX_ANALYZE_RETRIES})")
+                        conn.commit()
                 except Exception as e:
                     print(f"⚠️ [ANALYZER ERROR] {e}")
 

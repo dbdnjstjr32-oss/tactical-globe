@@ -46,3 +46,9 @@ build_webpack.log
 prod_start.log
 chrome_start.log
 *.log
+
+# AI assistant tooling (kept local, not published)
+.claude/
+CLAUDE.md
+AGENTS.md
+

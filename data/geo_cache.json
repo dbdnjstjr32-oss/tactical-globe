@@ -1,0 +1,672 @@
+{
+  "TÜRKIYE": {
+    "lat": 41.3822709,
+    "lng": 33.7807082,
+    "country": "TÜRKIYE"
+  },
+  "UNITED STATES": {
+    "lat": 39.7815924516583,
+    "lng": -100.39270713797548,
+    "country": "UNITED STATES"
+  },
+  "CROATIA": {
+    "lat": 45.3658443,
+    "lng": 15.6575209,
+    "country": "HRVATSKA"
+  },
+  "POLAND": {
+    "lat": 52.215933,
+    "lng": 19.134422,
+    "country": "POLSKA"
+  },
+  "SLOVENIA": {
+    "lat": 46.1199444,
+    "lng": 14.8153333,
+    "country": "SLOVENIJA"
+  },
+  "ITALY": {
+    "lat": 42.6384261,
+    "lng": 12.674297,
+    "country": "ITALIA"
+  },
+  "JAPAN": {
+    "lat": 36.5748441,
+    "lng": 139.2394179,
+    "country": "日本"
+  },
+  "COLOMBIA": {
+    "lat": 4.099917,
+    "lng": -72.9088133,
+    "country": "COLOMBIA"
+  },
+  "CHILE": {
+    "lat": -31.7613365,
+    "lng": -71.3187697,
+    "country": "CHILE"
+  },
+  "AUSTRIA": {
+    "lat": 47.59397,
+    "lng": 14.12456,
+    "country": "ÖSTERREICH"
+  },
+  "NEW ZEALAND": {
+    "lat": -41.5000831,
+    "lng": 172.8344077,
+    "country": "NEW ZEALAND / AOTEAROA"
+  },
+  "BELGIUM": {
+    "lat": 50.6402809,
+    "lng": 4.6667145,
+    "country": "BELGIË / BELGIQUE / BELGIEN"
+  },
+  "GERMANY": {
+    "lat": 51.1638175,
+    "lng": 10.4478313,
+    "country": "DEUTSCHLAND"
+  },
+  "NW PACIFIC": {
+    "lat": -33.8236096,
+    "lng": 151.1949829,
+    "country": "AUSTRALIA"
+  },
+  "MEXICO": {
+    "lat": 23.6585116,
+    "lng": -102.0077097,
+    "country": "MÉXICO"
+  },
+  "SOUTH KOREA": {
+    "lat": 36.638392,
+    "lng": 127.6961188,
+    "country": "대한민국"
+  },
+  "BRAZIL": {
+    "lat": -10.3333333,
+    "lng": -53.2,
+    "country": "BRASIL"
+  },
+  "PERU": {
+    "lat": -6.8699697,
+    "lng": -75.0458515,
+    "country": "PERÚ"
+  },
+  "THAILAND": {
+    "lat": 14.8971921,
+    "lng": 100.83273,
+    "country": "ประเทศไทย"
+  },
+  "AUSTRALIA": {
+    "lat": -24.7761086,
+    "lng": 134.755,
+    "country": "AUSTRALIA"
+  },
+  "MADAGASCAR": {
+    "lat": -18.9249604,
+    "lng": 46.4416422,
+    "country": "MADAGASIKARA / MADAGASCAR"
+  },
+  "DEMOCRATIC REPUBLIC OF THE CONGO": {
+    "lat": -2.9814344,
+    "lng": 23.8222636,
+    "country": "RÉPUBLIQUE DÉMOCRATIQUE DU CONGO"
+  },
+  "UNITED STATES OF AMERICA": {
+    "lat": 39.7837304,
+    "lng": -100.445882,
+    "country": "UNITED STATES"
+  },
+  "FIJI": {
+    "lat": -18.1239696,
+    "lng": 179.0122737,
+    "country": "VITI"
+  },
+  "SOLOMON ISLANDS": {
+    "lat": -8.7053941,
+    "lng": 159.1070694,
+    "country": "SOLOMON ISLANDS"
+  },
+  "YEMEN": {
+    "lat": 16.3471243,
+    "lng": 47.8915271,
+    "country": "اليمن"
+  },
+  "AFGHANISTAN": {
+    "lat": 33.7680065,
+    "lng": 66.2385139,
+    "country": "افغانستان"
+  },
+  "GUINEA-BISSAU": {
+    "lat": 11.815215,
+    "lng": -15.2351044,
+    "country": "GUINÉ-BISSAU"
+  },
+  "LIBERIA": {
+    "lat": 5.7499721,
+    "lng": -9.3658524,
+    "country": "LIBERIA"
+  },
+  "BANGLADESH": {
+    "lat": 24.4769288,
+    "lng": 90.2934413,
+    "country": "বাংলাদেশ"
+  },
+  "BOTSWANA": {
+    "lat": -23.1681782,
+    "lng": 24.5928742,
+    "country": "BOTSWANA"
+  },
+  "ETHIOPIA": {
+    "lat": 10.2116702,
+    "lng": 38.6521203,
+    "country": "ኢትዮጵያ"
+  },
+  "SURINAME": {
+    "lat": 4.1413025,
+    "lng": -56.0771187,
+    "country": "SURINAME"
+  },
+  "ANGOLA": {
+    "lat": -11.8775768,
+    "lng": 17.5691241,
+    "country": "ANGOLA"
+  },
+  "MONGOLIA": {
+    "lat": 46.8250388,
+    "lng": 103.8499736,
+    "country": "МОНГОЛ УЛС ᠮᠤᠩᠭᠤᠯ ᠤᠯᠤᠰ"
+  },
+  "N/A": {
+    "lat": 51.61521974776417,
+    "lng": 4.894956037114813,
+    "country": "NEDERLAND"
+  },
+  "KUWAIT INTERNATIONAL AIRPORT": {
+    "lat": 29.2202681,
+    "lng": 47.9551556,
+    "country": "الكويت"
+  },
+  "KUWAIT": {
+    "lat": 29.2733964,
+    "lng": 47.4979476,
+    "country": "الكويت"
+  },
+  "MALTA": {
+    "lat": 35.9311442,
+    "lng": 14.3951627,
+    "country": "MALTA"
+  },
+  "DUBAI": {
+    "lat": 25.0742823,
+    "lng": 55.1885387,
+    "country": "الإمارات العربية المتحدة"
+  },
+  "DEMOCRATIC REPUBLIC OF CONGO": {
+    "lat": -4.272507,
+    "lng": 15.2830399,
+    "country": "CONGO"
+  },
+  "NAIROBI": {
+    "lat": -1.302398,
+    "lng": 36.8288509,
+    "country": "KENYA"
+  },
+  "CONGO (DRC)": {
+    "lat": 0.5147586,
+    "lng": 29.4714305,
+    "country": "RÉPUBLIQUE DÉMOCRATIQUE DU CONGO"
+  },
+  "MULTIPLE": {
+    "lat": 32.7979615,
+    "lng": -117.1509655,
+    "country": "UNITED STATES"
+  },
+  "KENYA": {
+    "lat": 1.4419683,
+    "lng": 38.4313975,
+    "country": "KENYA"
+  },
+  "ZAMBIA": {
+    "lat": -14.5189121,
+    "lng": 27.5589884,
+    "country": "ZAMBIA"
+  },
+  "UNITED KINGDOM": {
+    "lat": 54.7023545,
+    "lng": -3.2765753,
+    "country": "UNITED KINGDOM"
+  },
+  "KENT": {
+    "lat": 51.2070749,
+    "lng": 0.7210362,
+    "country": "UNITED KINGDOM"
+  },
+  "ITURI": {
+    "lat": 2.1015973,
+    "lng": 29.0559738,
+    "country": "RÉPUBLIQUE DÉMOCRATIQUE DU CONGO"
+  },
+  "DEMOCRATIC REPUBLIC OF THE CONGO, UGANDA": {
+    "lat": -1.1505587,
+    "lng": 29.5835363,
+    "country": "RÉPUBLIQUE DÉMOCRATIQUE DU CONGO"
+  },
+  "GENEVA": {
+    "lat": 46.2017559,
+    "lng": 6.1466014,
+    "country": "SCHWEIZ/SUISSE/SVIZZERA/SVIZRA"
+  },
+  "TENERIFE": {
+    "lat": 28.2935785,
+    "lng": -16.6214471,
+    "country": "ESPAÑA"
+  },
+  "SAN FRANCISCO BAY AREA": {
+    "lat": 37.7884969,
+    "lng": -122.3558473,
+    "country": "UNITED STATES"
+  },
+  "NEW YORK": {
+    "lat": 40.7127281,
+    "lng": -74.0060152,
+    "country": "UNITED STATES"
+  },
+  "FRANCE": {
+    "lat": 46.603354,
+    "lng": 1.8883335,
+    "country": "FRANCE"
+  },
+  "WASHINGTON D.C.": {
+    "lat": 38.8950982,
+    "lng": -77.0363849,
+    "country": "UNITED STATES"
+  },
+  "PARIS": {
+    "lat": 48.8588897,
+    "lng": 2.320041,
+    "country": "FRANCE"
+  },
+  "SHENZHEN, GUANGDONG": {
+    "lat": 22.5445741,
+    "lng": 114.0545429,
+    "country": "中国"
+  },
+  "UNITED STATES, CALIFORNIA": {
+    "lat": 36.3290757,
+    "lng": -119.2929046,
+    "country": "UNITED STATES"
+  },
+  "CALIFORNIA": {
+    "lat": 36.7014631,
+    "lng": -118.755997,
+    "country": "UNITED STATES"
+  },
+  "SAN FRANCISCO, CALIFORNIA": {
+    "lat": 37.7879363,
+    "lng": -122.4075201,
+    "country": "UNITED STATES"
+  },
+  "CZECH REPUBLIC, TAIWAN": {
+    "lat": 50.0774715,
+    "lng": 14.4436876,
+    "country": "ČESKO"
+  },
+  "SAN FRANCISCO": {
+    "lat": 37.7879363,
+    "lng": -122.4075201,
+    "country": "UNITED STATES"
+  },
+  "SILICON VALLEY, CALIFORNIA": {
+    "lat": 37.4429964,
+    "lng": -122.1545229,
+    "country": "UNITED STATES"
+  },
+  "UNITED STATES, MARYLAND": {
+    "lat": 38.9817149,
+    "lng": -76.4817885,
+    "country": "UNITED STATES"
+  },
+  "REDMOND, WA": {
+    "lat": 47.6694141,
+    "lng": -122.1238767,
+    "country": "UNITED STATES"
+  },
+  "BEIJING": {
+    "lat": 39.9057136,
+    "lng": 116.3912972,
+    "country": "中国"
+  },
+  "UK": {
+    "lat": 52.5019896,
+    "lng": -2.0209184,
+    "country": "UNITED KINGDOM"
+  },
+  "CANADA": {
+    "lat": 61.0744385412699,
+    "lng": -107.9891899827622,
+    "country": "CANADA"
+  },
+  "MISSOURI": {
+    "lat": 38.7604815,
+    "lng": -92.5617875,
+    "country": "UNITED STATES"
+  },
+  "CZECH REPUBLIC": {
+    "lat": 22.2809359,
+    "lng": 114.174882,
+    "country": "中国"
+  },
+  "REDMOND": {
+    "lat": 47.6694141,
+    "lng": -122.1238767,
+    "country": "UNITED STATES"
+  },
+  "NETHERLANDS": {
+    "lat": 52.2434979,
+    "lng": 5.6343227,
+    "country": "NEDERLAND"
+  },
+  "CENTRAL ASIA": {
+    "lat": 22.29527,
+    "lng": 113.9171445,
+    "country": "中国"
+  },
+  "OTTAWA, CANADA": {
+    "lat": 47.5928312,
+    "lng": -52.7209345,
+    "country": "CANADA"
+  },
+  "BOLIVIA": {
+    "lat": -17.0568696,
+    "lng": -64.9912286,
+    "country": "BOLIVIA"
+  },
+  "RUSSIA": {
+    "lat": 64.6863136,
+    "lng": 97.7453061,
+    "country": "РОССИЯ"
+  },
+  "PERSIAN GULF": {
+    "lat": 36.3236517,
+    "lng": 50.0119968,
+    "country": "ایران"
+  },
+  "NIKOLAEV": {
+    "lat": 46.9758615,
+    "lng": 31.9939666,
+    "country": "УКРАЇНА"
+  },
+  "KREMENCHUG": {
+    "lat": 49.0928529,
+    "lng": 33.4308188,
+    "country": "УКРАЇНА"
+  },
+  "PRINCE SULTAN AIR BASE": {
+    "lat": 24.066252,
+    "lng": 47.5823882,
+    "country": "السعودية"
+  },
+  "FRANKFURT": {
+    "lat": 50.1106444,
+    "lng": 8.6820917,
+    "country": "DEUTSCHLAND"
+  },
+  "UKRAINE": {
+    "lat": 49.4871968,
+    "lng": 31.2718321,
+    "country": "УКРАЇНА"
+  },
+  "LONDON": {
+    "lat": 51.5074456,
+    "lng": -0.1277653,
+    "country": "UNITED KINGDOM"
+  },
+  "SAN JOSE": {
+    "lat": 37.3361663,
+    "lng": -121.890591,
+    "country": "UNITED STATES"
+  },
+  "HONDURAS": {
+    "lat": 15.2572432,
+    "lng": -86.0755145,
+    "country": "HONDURAS"
+  },
+  "MINA AL-FAHAL": {
+    "lat": 23.6230782,
+    "lng": 58.5182468,
+    "country": "عمان"
+  },
+  "SOUTH AFRICA": {
+    "lat": -28.8166236,
+    "lng": 24.991639,
+    "country": "SOUTH AFRICA"
+  },
+  "UKRAINE, RUSSIA": {
+    "lat": 48.5727918,
+    "lng": 39.3145456,
+    "country": "УКРАЇНА"
+  },
+  "ZAPORIZHZHIA": {
+    "lat": 47.8507859,
+    "lng": 35.1182867,
+    "country": "УКРАЇНА"
+  },
+  "UK, FRANCE": {
+    "lat": 51.5029386,
+    "lng": -0.0014592,
+    "country": "UNITED KINGDOM"
+  },
+  "TEHRAN, IRAN": {
+    "lat": 35.6866895,
+    "lng": 51.4390152,
+    "country": "ایران"
+  },
+  "AL UDEID": {
+    "lat": 25.1256709,
+    "lng": 51.3333044,
+    "country": "قطر"
+  },
+  "AZERBAIJAN, IRAN": {
+    "lat": 37.7416484,
+    "lng": 45.0207638,
+    "country": "ایران"
+  },
+  "NORMANDY": {
+    "lat": 49.0677708,
+    "lng": 0.3138532,
+    "country": "FRANCE"
+  },
+  "ST PETERSBURG": {
+    "lat": 59.9606739,
+    "lng": 30.1586551,
+    "country": "РОССИЯ"
+  },
+  "ISRAEL": {
+    "lat": 30.8124247,
+    "lng": 34.8594762,
+    "country": "ישראל"
+  },
+  "TOLEDO, OHIO": {
+    "lat": 41.6529143,
+    "lng": -83.5378173,
+    "country": "UNITED STATES"
+  },
+  "ST. PETERSBURG": {
+    "lat": 59.9606739,
+    "lng": 30.1586551,
+    "country": "РОССИЯ"
+  },
+  "WEST BANK": {
+    "lat": 31.8742759,
+    "lng": 35.4493828,
+    "country": "الأراضي الفلسطينية"
+  },
+  "AFRICA": {
+    "lat": 11.5024338,
+    "lng": 17.7578122,
+    "country": "AFRIKA / أفريقيا"
+  },
+  "GUERNSEY": {
+    "lat": 49.4622913,
+    "lng": -2.5812023,
+    "country": "GUERNSEY"
+  },
+  "KYIV OBLAST": {
+    "lat": 50.178595,
+    "lng": 30.4924884,
+    "country": "УКРАЇНА"
+  },
+  "TENNESSEE": {
+    "lat": 35.7730076,
+    "lng": -86.2820081,
+    "country": "UNITED STATES"
+  },
+  "CHORNOBYL": {
+    "lat": 51.2705477,
+    "lng": 30.2195609,
+    "country": "УКРАЇНА"
+  },
+  "PHILIPPINES": {
+    "lat": 12.7503486,
+    "lng": 122.7312101,
+    "country": "PHILIPPINES"
+  },
+  "MALAYSIA": {
+    "lat": 4.5693754,
+    "lng": 102.2656823,
+    "country": "MALAYSIA"
+  },
+  "RUSSIAN FEDERATION": {
+    "lat": 59.9332206,
+    "lng": 30.3348181,
+    "country": "РОССИЯ"
+  },
+  "AUCKLAND ISLANDS": {
+    "lat": -50.88239,
+    "lng": 166.060652,
+    "country": "NEW ZEALAND / AOTEAROA"
+  },
+  "NICARAGUA": {
+    "lat": 12.3506436,
+    "lng": -85.7841006,
+    "country": "NICARAGUA"
+  },
+  "SPAIN": {
+    "lat": 39.3260685,
+    "lng": -4.8379791,
+    "country": "ESPAÑA"
+  },
+  "GULF OF MEXICO": {
+    "lat": 19.4997329,
+    "lng": -99.0421364,
+    "country": "MÉXICO"
+  },
+  "CHINA": {
+    "lat": 34.5412252,
+    "lng": 108.9237067,
+    "country": "中国"
+  },
+  "CONGO": {
+    "lat": -4.272507,
+    "lng": 15.2830399,
+    "country": "CONGO"
+  },
+  "EL SALVADOR": {
+    "lat": 13.8000382,
+    "lng": -88.9140683,
+    "country": "EL SALVADOR"
+  },
+  "INDIA": {
+    "lat": 22.3511148,
+    "lng": 78.6677428,
+    "country": "INDIA"
+  },
+  "MAASIM, SARANGANI": {
+    "lat": 5.8610055,
+    "lng": 124.9967013,
+    "country": "PHILIPPINES"
+  },
+  "VENEZUELA": {
+    "lat": 8.0018709,
+    "lng": -66.1109318,
+    "country": "VENEZUELA"
+  },
+  "NEW DELHI": {
+    "lat": 28.6138954,
+    "lng": 77.2090057,
+    "country": "INDIA"
+  },
+  "ASSAM": {
+    "lat": 26.4073841,
+    "lng": 93.2551303,
+    "country": "INDIA"
+  },
+  "ARAGUA": {
+    "lat": 9.9648775,
+    "lng": -67.1299839,
+    "country": "VENEZUELA"
+  },
+  "AHMEDABAD": {
+    "lat": 23.0215374,
+    "lng": 72.5800568,
+    "country": "INDIA"
+  },
+  "OMAN": {
+    "lat": 21.0000287,
+    "lng": 57.0036901,
+    "country": "عمان"
+  },
+  "BANGKOK": {
+    "lat": 13.7524938,
+    "lng": 100.4935089,
+    "country": "ประเทศไทย"
+  },
+  "SYDNEY": {
+    "lat": -33.8698439,
+    "lng": 151.2082848,
+    "country": "AUSTRALIA"
+  },
+  "CRIMEA": {
+    "lat": 56.57511,
+    "lng": 36.5399613,
+    "country": "РОССИЯ"
+  },
+  "VIETNAM": {
+    "lat": 15.9266657,
+    "lng": 107.9650855,
+    "country": "VIỆT NAM"
+  },
+  "DENMARK": {
+    "lat": 55.670249,
+    "lng": 10.3333283,
+    "country": "DANMARK"
+  },
+  "VIRGINIA": {
+    "lat": 37.1232245,
+    "lng": -78.4927721,
+    "country": "UNITED STATES"
+  },
+  "SAN FRANCISCO, CA": {
+    "lat": 37.7879363,
+    "lng": -122.4075201,
+    "country": "UNITED STATES"
+  },
+  "UNITED STATES, WASHINGTON": {
+    "lat": 38.8939168,
+    "lng": -77.0426534,
+    "country": "UNITED STATES"
+  },
+  "MIDDLE EAST": {
+    "lat": 35.7037163,
+    "lng": 51.3793597,
+    "country": "ایران"
+  },
+  "JORDAN": {
+    "lat": 31.1667049,
+    "lng": 36.941628,
+    "country": "الأردن"
+  },
+  "MUWAFFAQ SALTI AIR BASE": {
+    "lat": 31.8205079,
+    "lng": 36.7794153,
+    "country": "الأردن"
+  }
+}

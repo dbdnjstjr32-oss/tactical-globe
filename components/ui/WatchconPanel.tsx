@@ -70,7 +70,7 @@ export default function WatchconPanel({
     <div
       className="relative overflow-hidden shrink-0"
       style={{
-        background: 'rgba(6, 10, 18, 0.95)',
+        background: 'rgba(10, 10, 10, 0.92)',
         border: `1px solid rgba(${info.rgb}, 0.25)`,
         borderRadius: '4px',
         boxShadow: `0 0 20px rgba(${info.rgb}, 0.06), inset 0 1px 0 rgba(${info.rgb}, 0.08)`,
@@ -94,7 +94,7 @@ export default function WatchconPanel({
               className="w-1.5 h-1.5 rounded-full"
               style={{ background: info.color, animation: 'beacon 2.4s ease-out infinite', boxShadow: `0 0 4px ${info.color}` }}
             />
-            <span className="text-[9px] font-bold tracking-[0.18em] uppercase" style={{ color: '#6a8aaa' }}>
+            <span className="text-[9px] font-bold tracking-[0.18em] uppercase" style={{ color: '#a0a0a0' }}>
               THREAT CONDITION LEVEL
             </span>
           </div>
@@ -117,13 +117,13 @@ export default function WatchconPanel({
         <div className="flex items-center gap-3">
           <div
             className="text-4xl font-black tabular-nums"
-            style={{ color: info.color, textShadow: `0 0 20px rgba(${info.rgb}, 0.4)`, fontFamily: 'monospace', lineHeight: 1 }}
+            style={{ color: info.color, textShadow: `0 0 20px rgba(${info.rgb}, 0.4)`, fontFamily: 'var(--font-share-tech-mono), monospace', lineHeight: 1 }}
           >
             {watchconStage}
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-bold tracking-[0.1em]" style={{ color: info.color }}>{info.name}</span>
-            <span className="text-[9px] tracking-[0.15em]" style={{ color: 'rgba(184,207,224,0.4)' }}>{info.label}</span>
+            <span className="text-[9px] tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.4)' }}>{info.label}</span>
           </div>
           <div className="flex-1 flex flex-col gap-1">
             {/* Level bars */}
@@ -135,14 +135,14 @@ export default function WatchconPanel({
                   style={{
                     background: lvl >= watchconStage
                       ? stageConfig[lvl].color
-                      : 'rgba(180,210,240,0.06)',
+                      : 'rgba(255,255,255,0.06)',
                     opacity: lvl === watchconStage ? 1 : lvl > watchconStage ? 0.35 : 0.6,
                     boxShadow: lvl === watchconStage ? `0 0 6px ${stageConfig[lvl].color}` : 'none',
                   }}
                 />
               ))}
             </div>
-            <div className="flex justify-between text-[7px]" style={{ color: 'rgba(184,207,224,0.25)' }}>
+            <div className="flex justify-between text-[7px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
               <span>NORMAL</span>
               <span>CRITICAL</span>
             </div>
@@ -159,8 +159,8 @@ export default function WatchconPanel({
               style={{
                 border: !watchconData?.override
                   ? '1px solid rgba(14,165,233,0.7)'
-                  : '1px solid rgba(180,210,240,0.10)',
-                color: !watchconData?.override ? '#0ea5e9' : 'rgba(180,210,240,0.35)',
+                  : '1px solid rgba(255,255,255,0.10)',
+                color: !watchconData?.override ? '#0ea5e9' : 'rgba(255,255,255,0.35)',
                 background: !watchconData?.override ? 'rgba(14,165,233,0.10)' : 'transparent',
                 boxShadow: !watchconData?.override ? '0 0 8px rgba(14,165,233,0.2)' : 'none',
               }}
@@ -178,8 +178,8 @@ export default function WatchconPanel({
                   onClick={(e) => { e.stopPropagation(); onStageChange(stageNum); }}
                   className="py-1.5 text-[8px] font-black tracking-wider transition-all duration-200 cursor-pointer"
                   style={{
-                    border: isActive ? `1px solid ${cfg.color}` : '1px solid rgba(180,210,240,0.09)',
-                    color: isActive ? cfg.color : 'rgba(180,210,240,0.40)',
+                    border: isActive ? `1px solid ${cfg.color}` : '1px solid rgba(255,255,255,0.09)',
+                    color: isActive ? cfg.color : 'rgba(255,255,255,0.40)',
                     background: isActive ? `rgba(${cfg.rgb}, 0.12)` : 'transparent',
                     boxShadow: isActive ? `0 0 8px rgba(${cfg.rgb}, 0.25)` : 'none',
                   }}
@@ -194,7 +194,7 @@ export default function WatchconPanel({
         {/* Meta row */}
         <div
           className="flex justify-between items-center pt-1.5"
-          style={{ borderTop: '1px solid rgba(180,210,240,0.05)' }}
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
         >
           <div className="flex flex-col gap-0.5">
             <span className="ia-label">POLL INTERVAL</span>
@@ -213,8 +213,8 @@ export default function WatchconPanel({
             style={{
               border: isMinimalTactical
                 ? '1px solid rgba(14,165,233,0.5)'
-                : '1px solid rgba(180,210,240,0.09)',
-              color: isMinimalTactical ? '#0ea5e9' : 'rgba(180,210,240,0.35)',
+                : '1px solid rgba(255,255,255,0.09)',
+              color: isMinimalTactical ? '#0ea5e9' : 'rgba(255,255,255,0.35)',
               background: isMinimalTactical ? 'rgba(14,165,233,0.08)' : 'transparent',
             }}
           >

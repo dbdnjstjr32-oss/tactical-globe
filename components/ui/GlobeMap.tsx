@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react"
 import { Map, MapMarker, MarkerContent, MarkerPopup } from "@/components/ui/map"
 import { TacticalEvent } from "./NewsFeed"
+import TacticalCanvas, { type TacticalToggles } from "./TacticalCanvas"
 
 // 🛰️ 고해상도 실제 위성 지구본 스타일 사양 (ESRI World Imagery + Boundaries & Places)
 const satelliteStyle: any = {
@@ -31,7 +32,13 @@ const satelliteStyle: any = {
       type: "raster",
       source: "satellite",
       minzoom: 0,
-      maxzoom: 20
+      maxzoom: 20,
+      // 미래형 전장 ui look: fully desaturated (grayscale) satellite terrain
+      paint: {
+        "raster-saturation": -1,
+        "raster-contrast": 0.08,
+        "raster-brightness-max": 0.82
+      }
     },
     {
       id: "boundaries-layer",
@@ -178,6 +185,7 @@ interface GlobeMapProps {
   showHeatmap: boolean
   isMinimalTactical: boolean
   currentTarget: TacticalEvent | null
+  tacticalToggles: TacticalToggles
 }
 
 export default function GlobeMap({
@@ -193,7 +201,8 @@ export default function GlobeMap({
   selectedChannel,
   showHeatmap,
   isMinimalTactical,
-  currentTarget
+  currentTarget,
+  tacticalToggles
 }: GlobeMapProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -226,7 +235,7 @@ export default function GlobeMap({
     isAutoPilotRef.current = isAutoPilot
   }, [isAutoPilot])
 
-  const safeBlurTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const safeBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const blurReleasedRef = useRef(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressRef = useRef<number[]>([0.0, 0.25, 0.5, 0.75])
@@ -424,14 +433,10 @@ export default function GlobeMap({
         ["case", ["==", ["get", "verified"], 1], 0.95, 0.35])
     }
 
-    if (opsMode === "IDLE") {
-      if (threeOrbitLayer && !map.getLayer("threejs-orbit-layer")) {
-        map.addLayer(threeOrbitLayer)
-      }
-    } else {
-      if (map.getLayer("threejs-orbit-layer")) {
-        map.removeLayer("threejs-orbit-layer")
-      }
+    // Globe-only decorative orbit layer is disabled in the flat tactical view;
+    // live tracking is handled by the TacticalCanvas overlay instead.
+    if (map.getLayer("threejs-orbit-layer")) {
+      map.removeLayer("threejs-orbit-layer")
     }
   }, [incidents, themeColor, opsMode, showHeatmap, verifiedIds])
 
@@ -440,7 +445,7 @@ export default function GlobeMap({
     if (!map) return
 
     const syncMapState = () => {
-      if (map && typeof map.setFog === "function") {
+      if (map && typeof map.setFog === "function" && map.getProjection?.()?.type === "globe") {
         map.setFog({
           color: opsMode === "ACTIVE" ? "#000a15" : "#000000",
           "high-color": "#000000",
@@ -589,14 +594,14 @@ export default function GlobeMap({
         ref={mapRef}
         reuseMaps
         styles={{
-          dark: opsMode === "ACTIVE" ? satelliteStyle : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-          light: opsMode === "ACTIVE" ? satelliteStyle : "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+          dark: satelliteStyle,
+          light: satelliteStyle
         }}
         {...({
           id: "global-ops-core-map",
           theme: "dark",
           initialViewState: { longitude: 126.9780, latitude: 37.5665, zoom: 2.5, pitch: 20 },
-          projection: { type: "globe" },
+          projection: { type: "mercator" },
           interactive: true,
           maxTileCacheSize: 512,
           maxReferencedTiles: 256,
@@ -610,7 +615,7 @@ export default function GlobeMap({
         onLoad={(evt: any) => {
           const map = evt.target
           
-          if (map && typeof map.setFog === "function") {
+          if (map && typeof map.setFog === "function" && map.getProjection?.()?.type === "globe") {
             map.setFog({
               color: opsMode === "ACTIVE" ? "#000a15" : "#000000",
               "high-color": "#000000",
@@ -728,12 +733,8 @@ export default function GlobeMap({
         )}
       </Map>
 
-      {opsMode === "IDLE" && (
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 z-10 pointer-events-none w-full h-full"
-        />
-      )}
+      {/* 미래형 전장 ui live-tracking overlay (aircraft / vessels / satellites / datacenters) */}
+      <TacticalCanvas mapRef={mapRef} {...tacticalToggles} />
 
       {showBlurOverlay && (
         <div

@@ -34,7 +34,7 @@ function SeverityBar({ severity, themeColor }: { severity: number; themeColor: s
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-full h-0.5 relative overflow-hidden" style={{ background: 'rgba(180,210,240,0.06)' }}>
+      <div className="w-full h-0.5 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
         <div
           className="h-full transition-all duration-700"
           style={{
@@ -71,7 +71,7 @@ export default function WeatherPanel({
 
   if (sortedIncidents.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center" style={{ color: 'rgba(184,207,224,0.3)' }}>
+      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
         <div className="text-[10px] tracking-[0.2em] font-bold uppercase">No Weather Alerts</div>
         <div className="text-[9px]">Atmosphere Nominal</div>
       </div>
@@ -92,6 +92,14 @@ export default function WeatherPanel({
           news.level === 'ELEVATED' ? '#f97316' :
           themeColor
 
+        // Side borders (not `border` shorthand) so the accent borderLeft
+        // doesn't collide with a shorthand on rerender.
+        const sideBorder = isCurrent
+          ? `1px solid rgba(var(--theme-rgb), 0.45)`
+          : isPinned
+            ? '1px solid rgba(239,68,68,0.25)'
+            : '1px solid rgba(255,255,255,0.06)'
+
         return (
           <button
             key={news.id || idx}
@@ -102,17 +110,15 @@ export default function WeatherPanel({
                 ? `rgba(var(--theme-rgb), 0.06)`
                 : isPinned
                   ? 'rgba(239,68,68,0.04)'
-                  : 'rgba(13,24,40,0.60)',
-              border: isCurrent
-                ? `1px solid rgba(var(--theme-rgb), 0.45)`
-                : isPinned
-                  ? '1px solid rgba(239,68,68,0.25)'
-                  : '1px solid rgba(180,210,240,0.06)',
+                  : 'rgba(20,20,20,0.60)',
+              borderTop: sideBorder,
+              borderRight: sideBorder,
+              borderBottom: sideBorder,
               borderLeft: isPinned
                 ? '2px solid #ef4444'
                 : isCurrent
                   ? `2px solid var(--theme-color)`
-                  : `2px solid rgba(180,210,240,0.08)`,
+                  : `2px solid rgba(255,255,255,0.08)`,
             }}
           >
             {severityPct >= 70 && (
@@ -125,7 +131,7 @@ export default function WeatherPanel({
                 <div className="flex items-center gap-1.5">
                   <span
                     className="text-[7px] font-bold tabular-nums"
-                    style={{ color: isCurrent ? 'var(--theme-color)' : 'rgba(184,207,224,0.25)' }}
+                    style={{ color: isCurrent ? 'var(--theme-color)' : 'rgba(255,255,255,0.25)' }}
                   >
                     #{String(idx + 1).padStart(2, '0')}
                   </span>
@@ -167,8 +173,8 @@ export default function WeatherPanel({
               <span
                 className="text-[11px] font-semibold leading-tight line-clamp-2 text-left"
                 style={{
-                  color: isTrigger ? '#f59e0b' : isCurrent ? '#e2eaf4' : '#b8cfe0',
-                  fontFamily: "'Courier New', monospace",
+                  color: isTrigger ? '#f59e0b' : isCurrent ? '#ffffff' : '#e0e0e0',
+                  fontFamily: "var(--font-share-tech-mono), monospace",
                 }}
               >
                 {news.title ?? news.region ?? 'METEOROLOGICAL EVENT'}
@@ -176,7 +182,7 @@ export default function WeatherPanel({
 
               {/* Location + severity */}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[8px] truncate" style={{ color: 'rgba(184,207,224,0.35)' }}>
+                <span className="text-[8px] truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>
                   {news.country || news.region || '—'}
                 </span>
               </div>

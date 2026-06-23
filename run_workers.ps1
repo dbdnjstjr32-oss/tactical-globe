@@ -17,8 +17,8 @@ $migrations = @("migration_kinematic", "migration_trust", "migration_media")
 
 # 1. Stop only OUR running workers (match 'worker_' in command line; leaves other python alone)
 Write-Host "[*] Stopping existing workers..." -ForegroundColor Yellow
-Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -match 'worker_(ingest|analyzer|fusion|adsb)' } |
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^(python|cmd)' -and $_.CommandLine -match 'worker_(ingest|analyzer|fusion|adsb)' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; Write-Host "    killed PID $($_.ProcessId)" }
 Start-Sleep -Seconds 1
 

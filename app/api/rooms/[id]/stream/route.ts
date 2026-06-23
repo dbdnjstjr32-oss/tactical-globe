@@ -28,7 +28,7 @@ export async function GET(
 
   const db = getDb();
   const encoder = new TextEncoder();
-  let interval: NodeJS.Timeout | null = null;
+  let interval: ReturnType<typeof setTimeout> | null = null;
   let isClosed = false;
 
   const cleanup = () => {

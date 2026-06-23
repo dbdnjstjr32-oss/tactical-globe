@@ -8,6 +8,8 @@ import WatchconPanel, { getWatchconColor, getWatchconRgb, WATCHCON_STAGES } from
 import NewsFeed, { TacticalEvent } from "@/components/ui/NewsFeed"
 import WeatherPanel from "@/components/ui/WeatherPanel"
 import GlobeMap from "@/components/ui/GlobeMap"
+import SettingsModal from "@/components/ui/SettingsModal"
+import type { TacticalToggles } from "@/components/ui/TacticalCanvas"
 
 // ── CONSENT ──────────────────────────────────────────────────
 const CONSENT_KEY = "tactical_globe_beta_consent_v1"
@@ -33,32 +35,32 @@ function ConsentModal({ onAccept }: { onAccept: () => void }) {
 
         <div style={{ padding: "24px" }}>
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid rgba(180,210,240,0.07)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
             <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px #22c55e", animation: "beacon 2.4s ease-out infinite", flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: "8px", fontWeight: 700, letterSpacing: "0.20em", color: "#4d7898", marginBottom: "2px", fontFamily: "monospace" }}>AUTHORIZATION PROTOCOL</div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#d4e2f0", letterSpacing: "0.08em", fontFamily: "monospace" }}>TACTICAL GLOBE — BETA ACCESS</div>
+              <div style={{ fontSize: "8px", fontWeight: 700, letterSpacing: "0.20em", color: "#909090", marginBottom: "2px", fontFamily: "var(--font-share-tech-mono), monospace" }}>AUTHORIZATION PROTOCOL</div>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.08em", fontFamily: "var(--font-share-tech-mono), monospace" }}>TACTICAL GLOBE — BETA ACCESS</div>
             </div>
           </div>
 
           {/* Policy text */}
           <div
             style={{
-              background: "rgba(180,210,240,0.02)",
-              border: "1px solid rgba(180,210,240,0.06)",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
               borderLeft: "2px solid rgba(34,197,94,0.4)",
               padding: "12px 14px",
               marginBottom: "20px",
               fontSize: "10px",
               lineHeight: 1.7,
-              color: "rgba(184,207,224,0.60)",
-              fontFamily: "monospace",
+              color: "rgba(255,255,255,0.60)",
+              fontFamily: "var(--font-share-tech-mono), monospace",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
             }}
           >
-            <p style={{ color: "#b8cfe0", fontWeight: 600, letterSpacing: "0.06em" }}>[ OPERATIONAL POLICY & DISCLAIMER ]</p>
+            <p style={{ color: "#e0e0e0", fontWeight: 600, letterSpacing: "0.06em" }}>[ OPERATIONAL POLICY & DISCLAIMER ]</p>
             <p>1. 본 시스템은 오픈 소스 정보를 수집·가공하는 시뮬레이션 환경으로, 실제 작전 판단의 유일한 근거로 사용될 수 없습니다.</p>
             <p>2. 제공 정보의 정확성·실시간성을 보장하지 않으며, 시스템 오류로 인한 결과에 책임을 지지 않습니다.</p>
             <p>3. 위치 정보는 보안 구역(Room) 인증 목적으로만 일시적으로 사용되며 서버에 저장되지 않습니다.</p>
@@ -77,7 +79,7 @@ function ConsentModal({ onAccept }: { onAccept: () => void }) {
                   onChange={e => setter(e.target.checked)}
                   style={{ marginTop: "2px", accentColor: "#22c55e" }}
                 />
-                <span style={{ fontSize: "10px", color: val ? "#b8cfe0" : "rgba(184,207,224,0.45)", lineHeight: 1.5, transition: "color 0.15s", fontFamily: "monospace" }}>
+                <span style={{ fontSize: "10px", color: val ? "#e0e0e0" : "rgba(255,255,255,0.45)", lineHeight: 1.5, transition: "color 0.15s", fontFamily: "var(--font-share-tech-mono), monospace" }}>
                   {text}
                 </span>
               </label>
@@ -94,11 +96,11 @@ function ConsentModal({ onAccept }: { onAccept: () => void }) {
               fontSize: "11px",
               fontWeight: 700,
               letterSpacing: "0.22em",
-              fontFamily: "monospace",
+              fontFamily: "var(--font-share-tech-mono), monospace",
               cursor: checked1 && checked2 ? "pointer" : "not-allowed",
-              border: checked1 && checked2 ? "1px solid rgba(34,197,94,0.6)" : "1px solid rgba(180,210,240,0.08)",
+              border: checked1 && checked2 ? "1px solid rgba(34,197,94,0.6)" : "1px solid rgba(255,255,255,0.08)",
               background: checked1 && checked2 ? "rgba(34,197,94,0.08)" : "transparent",
-              color: checked1 && checked2 ? "#22c55e" : "rgba(184,207,224,0.20)",
+              color: checked1 && checked2 ? "#22c55e" : "rgba(255,255,255,0.20)",
               boxShadow: checked1 && checked2 ? "0 0 20px rgba(34,197,94,0.15)" : "none",
               transition: "all 0.2s",
             }}
@@ -163,9 +165,14 @@ type TelemetryData = {
 
 // ── SHARED STYLES ─────────────────────────────────────────────
 const PANEL_STYLE: React.CSSProperties = {
-  background: "rgba(0, 0, 0, 0.85)",
-  border: "1px solid rgba(180,210,240,0.07)",
-  backdropFilter: "blur(14px)",
+  background: "rgba(12, 12, 12, 0.82)",
+  // Longhand borders (not the `border` shorthand) so per-panel `borderLeft`
+  // accent overrides don't collide with a shorthand during rerender.
+  borderTop: "1px solid rgba(255,255,255,0.15)",
+  borderRight: "1px solid rgba(255,255,255,0.15)",
+  borderBottom: "1px solid rgba(255,255,255,0.15)",
+  borderLeft: "1px solid rgba(255,255,255,0.15)",
+  backdropFilter: "blur(8px)",
   borderRadius: "4px",
 }
 
@@ -174,8 +181,8 @@ const PANEL_HEADER_STYLE: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "8px 12px",
-  borderBottom: "1px solid rgba(180,210,240,0.06)",
-  background: "rgba(180,210,240,0.015)",
+  borderBottom: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.03)",
 }
 
 const LABEL_STYLE: React.CSSProperties = {
@@ -183,8 +190,8 @@ const LABEL_STYLE: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.12em",
   textTransform: "uppercase" as const,
-  color: "#5a8aab",
-  fontFamily: "system-ui, sans-serif",
+  color: "#a0a0a0",
+  fontFamily: "var(--font-orbitron), sans-serif",
 }
 
 function PanelLabel({ children }: { children: React.ReactNode }) {
@@ -213,12 +220,12 @@ function MetricBar({ label, value, maxValue, unit, themeColor, themeRgb }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "10px", fontWeight: 600, color: "#5a8aab", letterSpacing: "0.08em", fontFamily: "system-ui, sans-serif" }}>{label}</span>
-        <span style={{ fontSize: "11px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>
+        <span style={{ fontSize: "10px", fontWeight: 600, color: "#a0a0a0", letterSpacing: "0.08em", fontFamily: "var(--font-orbitron), sans-serif" }}>{label}</span>
+        <span style={{ fontSize: "11px", fontFamily: "var(--font-share-tech-mono), monospace", color: "#e0e0e0", fontWeight: 600 }}>
           {value.toFixed(2)}{unit}
         </span>
       </div>
-      <div style={{ width: "100%", height: "2px", background: "rgba(180,210,240,0.06)", position: "relative", overflow: "hidden" }}>
+      <div style={{ width: "100%", height: "2px", background: "rgba(255,255,255,0.06)", position: "relative", overflow: "hidden" }}>
         <div
           style={{
             height: "100%", width: `${pct}%`,
@@ -269,6 +276,12 @@ export default function Home() {
   const [isInterceptsCollapsed, setIsInterceptsCollapsed] = useState<boolean>(false)
   const [focusMode, setFocusMode] = useState<boolean>(false)
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true)
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
+  const [tacticalToggles, setTacticalToggles] = useState<TacticalToggles>({
+    showAircraft: true, showVessels: false, showDataCenters: false, showSatTracks: true, isScanline: false,
+  })
+  const handleTacticalToggle = (key: keyof TacticalToggles, value: boolean) =>
+    setTacticalToggles((prev) => ({ ...prev, [key]: value }))
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [selectedChannel, setSelectedChannel] = useState<"GEOPOLITICS"|"ECONOMY"|"WEATHER"|"CYBER_AI">("GEOPOLITICS")
   const [selectedRegion, setSelectedRegion] = useState<keyof typeof REGION_COORDS>("GLOBAL")
@@ -286,7 +299,7 @@ export default function Home() {
 
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [opsMode, setOpsMode] = useState<"ACTIVE"|"IDLE">("ACTIVE")
-  const resumeTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [streamLogs, setStreamLogs] = useState<string[]>([
     "INITIALIZING RECEIVER INTERFACE...",
     "PORT FORWARDING ENGAGED: FETCH TARGET -> /api/news"
@@ -304,7 +317,12 @@ export default function Home() {
   const glitchDuration = isMinimalTactical ? 0 : currentWatchconInfo.glitch
 
   const displayIncidents = useMemo(() => {
-    let filtered = allIncidents.filter((ev) => ev.channel === selectedChannel)
+    // GEOPOLITICS feed also carries TELEGRAM-sourced incidents (mirrors the SSE
+    // query in app/api/news/stream), so include them or telegram nodes vanish.
+    let filtered = allIncidents.filter((ev) =>
+      ev.channel === selectedChannel ||
+      (selectedChannel === "GEOPOLITICS" && ev.channel === "TELEGRAM")
+    )
     if (selectedRegion !== "GLOBAL") {
       const allowedCountries = REGION_COUNTRY_MAPPING[selectedRegion] || []
       filtered = filtered.filter((ev) => {
@@ -410,7 +428,7 @@ export default function Home() {
     setStreamLogs(prev => [`[SCAN] CONNECTING ${selectedChannel} SSE STREAM...`, ...prev.slice(0, 7)])
     let retryCount = 0
     const MAX_RETRIES = 5
-    let retryTimer: NodeJS.Timeout | null = null
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
     let es: EventSource | null = null
     const connect = () => {
       es = new EventSource(`/api/news/stream?channel=${selectedChannel}&_ngrok_skip=1`)
@@ -476,7 +494,7 @@ export default function Home() {
   useEffect(() => {
     if (!isAutoPilot || displayIncidents.length === 0) return
     const map = mapRef.current?.getMap?.() || mapRef.current
-    let timer: NodeJS.Timeout
+    let timer: ReturnType<typeof setTimeout>
     if (opsMode === "ACTIVE") {
       const currentNews = displayIncidents[currentIndex]
       if (currentNews) {
@@ -684,7 +702,7 @@ export default function Home() {
     <>
     <main
       className="relative w-screen h-screen overflow-hidden font-mono select-none"
-      style={{ background: "#030609", "--theme-color": themeColor, "--theme-rgb": themeRgb } as React.CSSProperties}
+      style={{ background: "#000000", "--theme-color": themeColor, "--theme-rgb": themeRgb } as React.CSSProperties}
     >
       {/* Ambient vignette tied to WATCHCON */}
       <div
@@ -696,7 +714,8 @@ export default function Home() {
       <div
         className="absolute inset-0 z-[6] pointer-events-none"
         style={{
-          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(${themeRgb}, 0.012) 3px, rgba(${themeRgb}, 0.012) 4px)`,
+          backgroundImage: "linear-gradient(rgba(255,255,255,0) 50%, rgba(0,0,0,0.22) 50%)",
+          backgroundSize: "100% 4px",
           opacity: isMinimalTactical ? 0 : 1,
         }}
       />
@@ -721,6 +740,7 @@ export default function Home() {
         showHeatmap={showHeatmap}
         isMinimalTactical={isMinimalTactical}
         currentTarget={currentTarget}
+        tacticalToggles={tacticalToggles}
       />
 
       {/* Crosshair */}
@@ -762,7 +782,7 @@ export default function Home() {
       <div className="absolute top-0 left-0 right-0 z-30">
         <div
           className="h-[58px] flex items-center px-5 gap-4"
-          style={{ background: "rgba(3,6,9,0.96)", backdropFilter: "blur(20px)" }}
+          style={{ background: "rgba(8,8,8,0.92)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 1px 14px rgba(255,255,255,0.04)" }}
         >
           {/* Left: system title */}
           <div className="min-w-0 flex-1 flex flex-col justify-center">
@@ -770,12 +790,12 @@ export default function Home() {
               <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: themeColor, boxShadow: `0 0 6px ${themeColor}`, animation: "beacon 2.4s ease-out infinite", flexShrink: 0 }} />
               <h1
                 className="font-bold tracking-[0.16em] truncate"
-                style={{ fontSize: "13px", color: "#d4e2f0", fontFamily: "system-ui, -apple-system, sans-serif" }}
+                style={{ fontSize: "13px", color: "#ffffff", fontFamily: "var(--font-orbitron), sans-serif" }}
               >
                 GLOBAL CRISIS INTELLIGENCE MAP WATCH
               </h1>
             </div>
-            <p className="truncate mt-0.5 ml-4" style={{ fontSize: "9px", letterSpacing: "0.18em", color: "#3a5a78", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+            <p className="truncate mt-0.5 ml-4" style={{ fontSize: "9px", letterSpacing: "0.18em", color: "#707070", fontFamily: "var(--font-orbitron), sans-serif" }}>
               VERIFIED BROADCAST SOURCE INGESTION CORE // FULL SPECTRUM PROTOCOL
             </p>
           </div>
@@ -783,7 +803,7 @@ export default function Home() {
           {/* Center: channel tabs */}
           <div
             className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5"
-            style={{ background: "rgba(180,210,240,0.03)", border: "1px solid rgba(180,210,240,0.08)", padding: "3px", borderRadius: "4px" }}
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "3px", borderRadius: "4px" }}
           >
             {(Object.entries(CHANNEL_CONFIG) as [keyof typeof CHANNEL_CONFIG, typeof CHANNEL_CONFIG[keyof typeof CHANNEL_CONFIG]][]).map(([ch, cfg]) => {
               const isActive = selectedChannel === ch
@@ -797,11 +817,11 @@ export default function Home() {
                     fontSize: "11px",
                     fontWeight: 600,
                     letterSpacing: "0.10em",
-                    fontFamily: "system-ui, -apple-system, sans-serif",
+                    fontFamily: "var(--font-orbitron), sans-serif",
                     borderRadius: "3px",
                     border: isActive ? `1px solid ${cfg.color}60` : "1px solid transparent",
                     background: isActive ? `rgba(${themeRgb}, 0.10)` : "transparent",
-                    color: isActive ? cfg.color : "rgba(180,210,240,0.35)",
+                    color: isActive ? cfg.color : "rgba(255,255,255,0.35)",
                     boxShadow: isActive ? `0 0 10px rgba(${themeRgb}, 0.15)` : "none",
                     transition: "all 0.2s",
                   }}
@@ -815,6 +835,18 @@ export default function Home() {
           {/* Right: controls + stats */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
             <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="cursor-pointer transition-all duration-200"
+              style={{
+                fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", padding: "5px 11px",
+                borderRadius: "3px", border: `1px solid rgba(${themeRgb}, 0.20)`,
+                background: `rgba(${themeRgb}, 0.05)`, color: themeColor,
+                fontFamily: "var(--font-orbitron), sans-serif",
+              }}
+            >
+              [ CONFIG ]
+            </button>
+            <button
               onClick={() => setShowHeatmap(!showHeatmap)}
               className="cursor-pointer transition-all duration-200"
               style={{
@@ -825,23 +857,23 @@ export default function Home() {
                 borderRadius: "3px",
                 border: showHeatmap
                   ? `1px solid rgba(${themeRgb}, 0.40)`
-                  : "1px solid rgba(180,210,240,0.09)",
+                  : "1px solid rgba(255,255,255,0.09)",
                 background: showHeatmap ? `rgba(${themeRgb}, 0.08)` : "transparent",
-                color: showHeatmap ? themeColor : "rgba(180,210,240,0.30)",
-                fontFamily: "system-ui, -apple-system, sans-serif",
+                color: showHeatmap ? themeColor : "rgba(255,255,255,0.30)",
+                fontFamily: "var(--font-orbitron), sans-serif",
               }}
             >
               HEATMAP {showHeatmap ? "ON" : "OFF"}
             </button>
 
             <div className="flex flex-col" style={{ minWidth: "64px" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", color: "#4d7898", fontFamily: "system-ui, -apple-system, sans-serif", textTransform: "uppercase" }}>UTC TIME</div>
-              <div style={{ fontSize: "13px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>{mounted && time ? time.toISOString().slice(11, 19) : "00:00:00"}</div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", color: "#909090", fontFamily: "var(--font-orbitron), sans-serif", textTransform: "uppercase" }}>UTC TIME</div>
+              <div style={{ fontSize: "13px", fontFamily: "var(--font-share-tech-mono), monospace", color: "#e0e0e0", fontWeight: 600 }}>{mounted && time ? time.toISOString().slice(11, 19) : "00:00:00"}</div>
             </div>
 
             <div className="flex flex-col items-center" style={{ minWidth: "42px" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", color: "#4d7898", fontFamily: "system-ui, -apple-system, sans-serif", textTransform: "uppercase" }}>RENDER</div>
-              <div style={{ fontSize: "13px", fontFamily: "monospace", color: "#b8cfe0", fontWeight: 600 }}>{fps}<span style={{ fontSize: "9px", color: "#4d7898" }}> fps</span></div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", color: "#909090", fontFamily: "var(--font-orbitron), sans-serif", textTransform: "uppercase" }}>RENDER</div>
+              <div style={{ fontSize: "13px", fontFamily: "var(--font-share-tech-mono), monospace", color: "#e0e0e0", fontWeight: 600 }}>{fps}<span style={{ fontSize: "9px", color: "#909090" }}> fps</span></div>
             </div>
 
             <button
@@ -863,7 +895,7 @@ export default function Home() {
                   animation: "beacon 2.4s ease-out infinite",
                 }}
               />
-              <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", color: isLoading ? "#f59e0b" : themeColor, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+              <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.10em", color: isLoading ? "#f59e0b" : themeColor, fontFamily: "var(--font-orbitron), sans-serif" }}>
                 {focusMode ? "FOCUS" : isLoading ? "SYNC" : isAutoPilot ? "AUTO" : "MANUAL"}
               </span>
             </button>
@@ -907,8 +939,8 @@ export default function Home() {
                   fontSize: "8px",
                   fontWeight: 700,
                   letterSpacing: "0.1em",
-                  color: isRefreshing ? "rgba(180,210,240,0.20)" : themeColor,
-                  fontFamily: "monospace",
+                  color: isRefreshing ? "rgba(255,255,255,0.20)" : themeColor,
+                  fontFamily: "var(--font-share-tech-mono), monospace",
                   border: "none",
                   background: "none",
                   cursor: isRefreshing ? "not-allowed" : "pointer",
@@ -918,7 +950,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setIsInterceptsCollapsed(!isInterceptsCollapsed)}
-                style={{ fontSize: "10px", color: "rgba(180,210,240,0.35)", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
+                style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
               >
                 {isInterceptsCollapsed ? "▽" : "△"}
               </button>
@@ -931,8 +963,8 @@ export default function Home() {
               <div
                 style={{
                   padding: "6px 10px",
-                  borderBottom: "1px solid rgba(180,210,240,0.05)",
-                  background: "rgba(180,210,240,0.01)",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  background: "rgba(255,255,255,0.01)",
                   display: "grid",
                   gridTemplateColumns: "repeat(3, 1fr)",
                   gap: "4px",
@@ -950,10 +982,10 @@ export default function Home() {
                         fontWeight: 700,
                         letterSpacing: "0.06em",
                         padding: "4px 4px",
-                        border: isSelected ? `1px solid rgba(${themeRgb}, 0.50)` : "1px solid rgba(180,210,240,0.08)",
+                        border: isSelected ? `1px solid rgba(${themeRgb}, 0.50)` : "1px solid rgba(255,255,255,0.08)",
                         background: isSelected ? `rgba(${themeRgb}, 0.10)` : "transparent",
-                        color: isSelected ? themeColor : "rgba(180,210,240,0.35)",
-                        fontFamily: "monospace",
+                        color: isSelected ? themeColor : "rgba(255,255,255,0.35)",
+                        fontFamily: "var(--font-share-tech-mono), monospace",
                         boxShadow: isSelected ? `0 0 6px rgba(${themeRgb}, 0.15)` : "none",
                         textAlign: "center",
                         whiteSpace: "nowrap",
@@ -1001,7 +1033,7 @@ export default function Home() {
             </div>
             <div
               className="flex items-center gap-1"
-              style={{ fontSize: "7px", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "monospace" }}
+              style={{ fontSize: "7px", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "var(--font-share-tech-mono), monospace" }}
             >
               <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#22c55e", animation: "beacon 2.4s ease-out infinite" }} />
               <span style={{ color: "#22c55e" }}>TRACKING</span>
@@ -1021,7 +1053,7 @@ export default function Home() {
             <div>
               <div className="ia-label mb-1.5">THREAT SEVERITY</div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ flex: 1, height: "3px", background: "rgba(180,210,240,0.06)", position: "relative", overflow: "hidden" }}>
+                <div style={{ flex: 1, height: "3px", background: "rgba(255,255,255,0.06)", position: "relative", overflow: "hidden" }}>
                   <div
                     style={{
                       height: "100%",
@@ -1085,7 +1117,7 @@ export default function Home() {
           <div className="max-h-[110px] overflow-y-auto scrollbar-none" style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: "6px" }}>
             {activeRooms.length === 0 ? (
               <div
-                style={{ textAlign: "center", padding: "12px", fontSize: "9px", color: "rgba(180,210,240,0.25)", letterSpacing: "0.12em", border: "1px dashed rgba(180,210,240,0.08)", fontFamily: "monospace" }}
+                style={{ textAlign: "center", padding: "12px", fontSize: "9px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.12em", border: "1px dashed rgba(255,255,255,0.08)", fontFamily: "var(--font-share-tech-mono), monospace" }}
               >
                 NO ACTIVE CHANNELS
               </div>
@@ -1103,13 +1135,13 @@ export default function Home() {
                   onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.07)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.35)" }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.03)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.18)" }}
                 >
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#d4e2f0", marginBottom: "2px", fontFamily: "system-ui, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", marginBottom: "2px", fontFamily: "var(--font-orbitron), sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {room.title}
                   </div>
-                  <div style={{ fontSize: "11px", color: "rgba(180,210,240,0.45)", fontFamily: "system-ui, sans-serif", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-orbitron), sans-serif", marginBottom: "4px" }}>
                     {room.region} · {room.country}
                   </div>
-                  <div style={{ fontSize: "9px", color: "rgba(239,68,68,0.7)", letterSpacing: "0.12em", fontWeight: 700, fontFamily: "monospace" }}>
+                  <div style={{ fontSize: "9px", color: "rgba(239,68,68,0.7)", letterSpacing: "0.12em", fontWeight: 700, fontFamily: "var(--font-share-tech-mono), monospace" }}>
                     ▶ CONNECT TO ROOM
                   </div>
                 </div>
@@ -1123,7 +1155,7 @@ export default function Home() {
           <div style={PANEL_HEADER_STYLE}>
             <PanelLabel>INTELLIGENCE BRIEFING</PanelLabel>
             {displaySource && (
-              <span style={{ fontSize: "7px", color: "rgba(180,210,240,0.30)", fontFamily: "monospace", letterSpacing: "0.08em" }}>
+              <span style={{ fontSize: "7px", color: "rgba(255,255,255,0.30)", fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.08em" }}>
                 SRC: {displaySource}
               </span>
             )}
@@ -1133,7 +1165,7 @@ export default function Home() {
           >
             {/* Child feed tabs */}
             {childFeeds.length > 1 && (
-              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", paddingBottom: "6px", borderBottom: "1px solid rgba(180,210,240,0.05)" }}>
+              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 {childFeeds.map((feed: any, idx: number) => (
                   <button
                     key={idx}
@@ -1143,10 +1175,10 @@ export default function Home() {
                       fontWeight: 700,
                       padding: "2px 6px",
                       cursor: "pointer",
-                      fontFamily: "monospace",
-                      border: idx === activeChildFeedTab ? `1px solid rgba(${themeRgb}, 0.45)` : "1px solid rgba(180,210,240,0.08)",
+                      fontFamily: "var(--font-share-tech-mono), monospace",
+                      border: idx === activeChildFeedTab ? `1px solid rgba(${themeRgb}, 0.45)` : "1px solid rgba(255,255,255,0.08)",
                       background: idx === activeChildFeedTab ? `rgba(${themeRgb}, 0.10)` : "transparent",
-                      color: idx === activeChildFeedTab ? themeColor : "rgba(180,210,240,0.30)",
+                      color: idx === activeChildFeedTab ? themeColor : "rgba(255,255,255,0.30)",
                     }}
                   >
                     {feed.source || "RPT"} #{idx + 1}
@@ -1156,27 +1188,27 @@ export default function Home() {
             )}
 
             {/* Source + link */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", background: "rgba(180,210,240,0.02)", border: "1px solid rgba(180,210,240,0.05)" }}>
-              <span style={{ fontSize: "8px", color: "rgba(180,210,240,0.35)", fontFamily: "monospace" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-share-tech-mono), monospace" }}>
                 SOURCE: <span style={{ color: themeColor, fontWeight: 700 }}>{displaySource}</span>
               </span>
               {displayLink ? (
-                <a href={displayLink} target="_blank" rel="noopener noreferrer" style={{ fontSize: "7px", color: themeColor, fontFamily: "monospace", textDecoration: "underline", letterSpacing: "0.06em" }}>
+                <a href={displayLink} target="_blank" rel="noopener noreferrer" style={{ fontSize: "7px", color: themeColor, fontFamily: "var(--font-share-tech-mono), monospace", textDecoration: "underline", letterSpacing: "0.06em" }}>
                   LINK ↗
                 </a>
               ) : (
-                <span style={{ fontSize: "7px", color: "rgba(180,210,240,0.20)", fontFamily: "monospace" }}>NO LINK</span>
+                <span style={{ fontSize: "7px", color: "rgba(255,255,255,0.20)", fontFamily: "var(--font-share-tech-mono), monospace" }}>NO LINK</span>
               )}
             </div>
 
             {/* Title */}
-            <div style={{ fontSize: "13px", fontWeight: 700, color: "#d4e2f0", fontFamily: "system-ui, sans-serif", lineHeight: 1.4, letterSpacing: "0.01em" }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-orbitron), sans-serif", lineHeight: 1.4, letterSpacing: "0.01em" }}>
               {displayTitle}
             </div>
 
             {/* Media preview (image via safe proxy, video direct from SNS) */}
             {currentTarget?.media_url && (
-              <div style={{ position: "relative", width: "100%", height: "120px", background: "#000", border: "1px solid rgba(180,210,240,0.08)", overflow: "hidden" }}>
+              <div style={{ position: "relative", width: "100%", height: "120px", background: "#000", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
                 {currentTarget.media_type === "video" ? (
                   <video
                     src={currentTarget.media_url}
@@ -1193,7 +1225,7 @@ export default function Home() {
                     onError={(e) => { const el = e.currentTarget.parentElement as HTMLElement | null; if (el) el.style.display = "none" }}
                   />
                 )}
-                <span style={{ position: "absolute", bottom: "3px", right: "4px", fontSize: "7px", padding: "1px 4px", background: "rgba(0,0,0,0.7)", color: "rgba(180,210,240,0.6)", fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                <span style={{ position: "absolute", bottom: "3px", right: "4px", fontSize: "7px", padding: "1px 4px", background: "rgba(0,0,0,0.7)", color: "rgba(255,255,255,0.6)", fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.1em", textTransform: "uppercase" }}>
                   {currentTarget.sns_source || "MEDIA"}
                 </span>
               </div>
@@ -1203,11 +1235,11 @@ export default function Home() {
             <div
               style={{
                 fontSize: "12px",
-                color: "#9bbdd4",
+                color: "#cfcfcf",
                 lineHeight: 1.65,
                 paddingTop: "8px",
                 borderTop: `1px solid rgba(${themeRgb}, 0.10)`,
-                fontFamily: "system-ui, sans-serif",
+                fontFamily: "var(--font-orbitron), sans-serif",
               }}
             >
               {displaySummary}
@@ -1216,9 +1248,9 @@ export default function Home() {
             {/* Consensus sources */}
             {verifiedSources.length > 1 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center" }}>
-                <span style={{ fontSize: "7px", color: "rgba(180,210,240,0.25)", fontFamily: "monospace" }}>CONSENSUS:</span>
+                <span style={{ fontSize: "7px", color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-share-tech-mono), monospace" }}>CONSENSUS:</span>
                 {verifiedSources.map((src, i) => (
-                  <span key={i} style={{ fontSize: "7px", padding: "1px 5px", border: "1px solid rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.06)", color: "#22c55e", fontFamily: "monospace", fontWeight: 700 }}>
+                  <span key={i} style={{ fontSize: "7px", padding: "1px 5px", border: "1px solid rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.06)", color: "#22c55e", fontFamily: "var(--font-share-tech-mono), monospace", fontWeight: 700 }}>
                     {src}
                   </span>
                 ))}
@@ -1233,11 +1265,11 @@ export default function Home() {
                 { label: "VELOCITY",   value: currentTarget?.threat_velocity != null ? (currentTarget.threat_velocity > 0 ? `+${currentTarget.threat_velocity}` : String(currentTarget.threat_velocity)) : "0" },
                 { label: "RISK INDEX", value: String(currentTarget?.region_risk_index || 0) },
               ].map(({ label, value, alert }) => (
-                <div key={label} style={{ background: "rgba(180,210,240,0.02)", border: "1px solid rgba(180,210,240,0.05)", padding: "6px 8px" }}>
+                <div key={label} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", padding: "6px 8px" }}>
                   <div className="ia-label mb-0.5">{label}</div>
                   <div
                     className="ia-data text-[10px]"
-                    style={{ color: alert ? "#ef4444" : "#b8cfe0" }}
+                    style={{ color: alert ? "#ef4444" : "#e0e0e0" }}
                   >
                     {value}
                   </div>
@@ -1249,13 +1281,14 @@ export default function Home() {
             <div
               suppressHydrationWarning
               style={{
-                fontSize: "8px",
-                color: "rgba(180,210,240,0.30)",
-                fontFamily: "monospace",
-                padding: "4px 8px",
-                borderLeft: `2px solid rgba(${themeRgb}, 0.30)`,
-                background: "rgba(180,210,240,0.01)",
-                letterSpacing: "0.08em",
+                fontSize: "11px",
+                color: "#fcd34d",
+                fontWeight: 600,
+                fontFamily: "var(--font-share-tech-mono), monospace",
+                padding: "5px 10px",
+                borderLeft: "3px solid #f59e0b",
+                background: "rgba(245,158,11,0.08)",
+                letterSpacing: "0.10em",
               }}
             >
               TIMELINE: {mounted ? formatKstDate(currentTarget?.created_at) : "REALTIME"}
@@ -1269,7 +1302,7 @@ export default function Home() {
             <PanelLabel>SYSTEM TELEMETRY</PanelLabel>
             <div className="flex items-center gap-1.5">
               <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#22c55e", animation: "beacon 2.4s ease-out infinite" }} />
-              <span style={{ fontSize: "7px", color: "#22c55e", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.1em" }}>LIVE</span>
+              <span style={{ fontSize: "7px", color: "#22c55e", fontFamily: "var(--font-share-tech-mono), monospace", fontWeight: 700, letterSpacing: "0.1em" }}>LIVE</span>
             </div>
           </div>
           <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1277,7 +1310,7 @@ export default function Home() {
             <MetricBar label="GEO CACHE HIT RATE"       value={telemetry.geo_cache_hit_rate}   maxValue={100} unit="%" themeColor={themeColor} themeRgb={themeRgb} />
             <MetricBar label="DUPLICATE FILTER RATE"    value={telemetry.duplicate_rate}       maxValue={100} unit="%" themeColor={themeColor} themeRgb={themeRgb} />
             <MetricBar label="RSS INGEST LATENCY"       value={telemetry.rss_fetch_latency}    maxValue={5} unit="s" themeColor={themeColor} themeRgb={themeRgb} />
-            <div style={{ textAlign: "right", fontSize: "7px", color: "rgba(180,210,240,0.20)", fontFamily: "monospace", marginTop: "2px" }}>
+            <div style={{ textAlign: "right", fontSize: "7px", color: "rgba(255,255,255,0.20)", fontFamily: "var(--font-share-tech-mono), monospace", marginTop: "2px" }}>
               UPDATED: {telemetry.last_updated ? new Date(telemetry.last_updated).toLocaleTimeString() : "PENDING"}
             </div>
           </div>
@@ -1289,7 +1322,7 @@ export default function Home() {
             <PanelLabel>STREAM ACTIVITY LOG</PanelLabel>
             <div className="flex items-center gap-1">
               <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: themeColor, animation: "data-tick 1.8s step-end infinite" }} />
-              <span style={{ fontSize: "7px", color: themeColor, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.1em" }}>LIVE</span>
+              <span style={{ fontSize: "7px", color: themeColor, fontFamily: "var(--font-share-tech-mono), monospace", fontWeight: 700, letterSpacing: "0.1em" }}>LIVE</span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-none" style={{ padding: "8px 12px", display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -1298,11 +1331,11 @@ export default function Home() {
                 key={idx}
                 style={{
                   fontSize: "10px",
-                  fontFamily: "monospace",
+                  fontFamily: "var(--font-share-tech-mono), monospace",
                   padding: "3px 6px",
-                  borderLeft: idx === 0 ? `2px solid ${themeColor}` : "2px solid rgba(180,210,240,0.06)",
+                  borderLeft: idx === 0 ? `2px solid ${themeColor}` : "2px solid rgba(255,255,255,0.06)",
                   background: idx === 0 ? `rgba(${themeRgb}, 0.06)` : "transparent",
-                  color: idx === 0 ? themeColor : "rgba(180,210,240,0.35)",
+                  color: idx === 0 ? themeColor : "rgba(255,255,255,0.35)",
                   letterSpacing: "0.03em",
                   lineHeight: 1.5,
                   transition: "all 0.3s",
@@ -1319,20 +1352,20 @@ export default function Home() {
       <div
         className="absolute bottom-0 left-0 right-0 h-10 z-30 flex items-center justify-between px-5"
         style={{
-          background: "rgba(3,6,9,0.97)",
-          borderTop: "1px solid rgba(180,210,240,0.06)",
+          background: "rgba(0,0,0,0.92)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
           backdropFilter: "blur(20px)",
         }}
       >
         <div className="flex items-center gap-3">
           <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: themeColor, animation: "beacon 2.4s ease-out infinite", boxShadow: `0 0 6px ${themeColor}` }} />
-          <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", color: themeColor, fontFamily: "monospace" }}>
+          <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", color: themeColor, fontFamily: "var(--font-share-tech-mono), monospace" }}>
             SYS_ONLINE // V13.0_TACTICAL
           </span>
-          <span style={{ fontSize: "8px", color: "rgba(180,210,240,0.20)", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+          <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.20)", fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.1em" }}>
             ·
           </span>
-          <span style={{ fontSize: "8px", color: "rgba(180,210,240,0.28)", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+          <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.28)", fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.1em" }}>
             SCAN: 15s // GEO: LOCK-ON ACTIVE
           </span>
         </div>
@@ -1344,7 +1377,7 @@ export default function Home() {
             fontSize: "8px",
             fontWeight: 700,
             letterSpacing: "0.14em",
-            fontFamily: "monospace",
+            fontFamily: "var(--font-share-tech-mono), monospace",
             border: showFeedback
               ? "1px solid rgba(34,197,94,0.55)"
               : `1px solid rgba(${themeRgb}, 0.22)`,
@@ -1365,7 +1398,7 @@ export default function Home() {
           style={{
             transform: "translate(-50%, calc(-100% - 44px))",
             width: "min(400px, 84vw)",
-            background: "rgba(4,8,16,0.96)",
+            background: "rgba(10,10,10,0.96)",
             border: `1px solid rgba(${themeRgb}, 0.30)`,
             borderRadius: "14px",
             boxShadow: `0 0 50px rgba(0,0,0,0.7), 0 0 24px rgba(${themeRgb}, 0.10)`,
@@ -1381,15 +1414,15 @@ export default function Home() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: themeColor, boxShadow: `0 0 6px ${themeColor}`, animation: "beacon 2.4s ease-out infinite" }} />
-                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", color: "#4d7898", textTransform: "uppercase", fontFamily: "system-ui, sans-serif" }}>
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.16em", color: "#909090", textTransform: "uppercase", fontFamily: "var(--font-orbitron), sans-serif" }}>
                   Intelligence Briefing
                 </span>
               </div>
               <button
                 onClick={() => setFocusMode(false)}
-                style={{ fontSize: "15px", color: "rgba(180,210,240,0.40)", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#d4e2f0")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(180,210,240,0.40)")}
+                style={{ fontSize: "15px", color: "rgba(255,255,255,0.40)", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.40)")}
               >
                 ✕
               </button>
@@ -1398,28 +1431,43 @@ export default function Home() {
             {/* Timeline */}
             <div
               suppressHydrationWarning
-              style={{ fontSize: "9px", color: `rgba(${themeRgb}, 0.7)`, fontFamily: "monospace", letterSpacing: "0.08em", borderLeft: `2px solid rgba(${themeRgb}, 0.35)`, paddingLeft: "8px" }}
+              style={{ fontSize: "11px", color: "#fcd34d", fontWeight: 600, fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.10em", borderLeft: "3px solid #f59e0b", padding: "4px 10px", background: "rgba(245,158,11,0.06)" }}
             >
               TIMELINE // {mounted ? formatKstDate(currentTarget?.created_at) : "REALTIME"}
             </div>
 
             {/* Title */}
-            <div style={{ fontSize: "17px", fontWeight: 700, color: "#e2eaf4", fontFamily: "system-ui, sans-serif", lineHeight: 1.4 }}>
+            <div style={{ fontSize: "17px", fontWeight: 700, color: "#ffffff", fontFamily: "var(--font-orbitron), sans-serif", lineHeight: 1.4 }}>
               {displayTitle}
             </div>
 
             {/* Source */}
-            <div style={{ fontSize: "10px", color: "rgba(180,210,240,0.45)", fontFamily: "monospace", letterSpacing: "0.06em" }}>
+            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.06em" }}>
               SOURCE: <span style={{ color: themeColor, fontWeight: 700 }}>{displaySource}</span>
             </div>
 
             {/* Korean briefing */}
-            <div style={{ fontSize: "14px", color: "#9bbdd4", lineHeight: 1.75, fontFamily: "system-ui, sans-serif", paddingTop: "12px", borderTop: `1px solid rgba(${themeRgb}, 0.12)` }}>
+            <div style={{ fontSize: "14px", color: "#cfcfcf", lineHeight: 1.75, fontFamily: "var(--font-orbitron), sans-serif", paddingTop: "12px", borderTop: `1px solid rgba(${themeRgb}, 0.12)` }}>
               {displaySummary}
             </div>
           </div>
         </div>
       )}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        themeColor={themeColor}
+        tacticalToggles={tacticalToggles}
+        onTacticalToggle={handleTacticalToggle}
+        isMinimalTactical={isMinimalTactical}
+        setIsMinimalTactical={setIsMinimalTactical}
+        focusMode={focusMode}
+        setFocusMode={setFocusMode}
+        showHeatmap={showHeatmap}
+        setShowHeatmap={setShowHeatmap}
+        isAutoPilot={isAutoPilot}
+        setIsAutoPilot={setIsAutoPilot}
+      />
     </main>
 
     {/* ── CONSENT MODAL ─────────────────────────────────── */}
@@ -1436,65 +1484,65 @@ export default function Home() {
             width: "100%",
             maxWidth: "460px",
             margin: "0 16px",
-            background: "#040810",
+            background: "#0a0a0a",
             border: "1px solid rgba(34,197,94,0.22)",
             borderRadius: "4px",
             boxShadow: "0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(34,197,94,0.06)",
-            fontFamily: "monospace",
+            fontFamily: "var(--font-share-tech-mono), monospace",
           }}
         >
           {/* Accent */}
           <div style={{ height: "2px", background: "linear-gradient(90deg, transparent, #22c55e, transparent)", opacity: 0.8 }} />
           {/* Header */}
-          <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid rgba(180,210,240,0.06)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <div style={{ fontSize: "8px", color: "#4d7898", letterSpacing: "0.20em", fontWeight: 700, marginBottom: "6px" }}>BETA TESTER DEBRIEF</div>
+              <div style={{ fontSize: "8px", color: "#909090", letterSpacing: "0.20em", fontWeight: 700, marginBottom: "6px" }}>BETA TESTER DEBRIEF</div>
               <div style={{ fontSize: "15px", fontWeight: 900, color: "#22c55e", letterSpacing: "0.08em" }}>MISSION FEEDBACK</div>
             </div>
-            <button onClick={() => setShowFeedback(false)} style={{ fontSize: "16px", color: "rgba(180,210,240,0.30)", cursor: "pointer", background: "none", border: "none", transition: "color 0.15s" }} onMouseEnter={e => (e.currentTarget.style.color = "#b8cfe0")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(180,210,240,0.30)")}>✕</button>
+            <button onClick={() => setShowFeedback(false)} style={{ fontSize: "16px", color: "rgba(255,255,255,0.30)", cursor: "pointer", background: "none", border: "none", transition: "color 0.15s" }} onMouseEnter={e => (e.currentTarget.style.color = "#e0e0e0")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.30)")}>✕</button>
           </div>
 
           {fbDone ? (
             <div style={{ padding: "48px 22px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
               <div style={{ fontSize: "36px", color: "#22c55e" }}>✓</div>
               <div style={{ fontSize: "12px", color: "#22c55e", fontWeight: 700, letterSpacing: "0.16em" }}>TRANSMITTED</div>
-              <div style={{ fontSize: "10px", color: "rgba(180,210,240,0.35)", letterSpacing: "0.08em" }}>데이터가 수신되었습니다.</div>
+              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>데이터가 수신되었습니다.</div>
             </div>
           ) : (
             <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Rating */}
               <div>
-                <div style={{ fontSize: "8px", color: "#4d7898", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px" }}>SYSTEM RATING</div>
+                <div style={{ fontSize: "8px", color: "#909090", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px" }}>SYSTEM RATING</div>
                 <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   {[1,2,3,4,5].map(s => (
-                    <button key={s} onClick={() => setFbRating(s)} style={{ fontSize: "22px", cursor: "pointer", background: "none", border: "none", padding: 0, color: s <= fbRating ? "#22c55e" : "rgba(180,210,240,0.12)", textShadow: s <= fbRating ? "0 0 8px #22c55e" : "none", transition: "all 0.15s" }}>★</button>
+                    <button key={s} onClick={() => setFbRating(s)} style={{ fontSize: "22px", cursor: "pointer", background: "none", border: "none", padding: 0, color: s <= fbRating ? "#22c55e" : "rgba(255,255,255,0.12)", textShadow: s <= fbRating ? "0 0 8px #22c55e" : "none", transition: "all 0.15s" }}>★</button>
                   ))}
-                  <span style={{ fontSize: "9px", color: "rgba(180,210,240,0.30)", marginLeft: "4px" }}>{fbRating === 0 ? "선택" : ["매우 불만","불만","보통","만족","매우 만족"][fbRating-1]}</span>
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.30)", marginLeft: "4px" }}>{fbRating === 0 ? "선택" : ["매우 불만","불만","보통","만족","매우 만족"][fbRating-1]}</span>
                 </div>
               </div>
               {/* Category */}
               <div>
-                <div style={{ fontSize: "8px", color: "#4d7898", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px" }}>REPORT CATEGORY</div>
+                <div style={{ fontSize: "8px", color: "#909090", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px" }}>REPORT CATEGORY</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {["GENERAL","UI/UX","DATA","BUG","PERFORMANCE"].map(cat => (
-                    <button key={cat} onClick={() => setFbCategory(cat)} style={{ padding: "4px 10px", fontSize: "8px", fontWeight: 700, cursor: "pointer", border: fbCategory === cat ? "1px solid rgba(34,197,94,0.50)" : "1px solid rgba(180,210,240,0.09)", background: fbCategory === cat ? "rgba(34,197,94,0.08)" : "transparent", color: fbCategory === cat ? "#22c55e" : "rgba(180,210,240,0.30)", letterSpacing: "0.10em", fontFamily: "monospace", transition: "all 0.15s" }}>{cat}</button>
+                    <button key={cat} onClick={() => setFbCategory(cat)} style={{ padding: "4px 10px", fontSize: "8px", fontWeight: 700, cursor: "pointer", border: fbCategory === cat ? "1px solid rgba(34,197,94,0.50)" : "1px solid rgba(255,255,255,0.09)", background: fbCategory === cat ? "rgba(34,197,94,0.08)" : "transparent", color: fbCategory === cat ? "#22c55e" : "rgba(255,255,255,0.30)", letterSpacing: "0.10em", fontFamily: "var(--font-share-tech-mono), monospace", transition: "all 0.15s" }}>{cat}</button>
                   ))}
                 </div>
               </div>
               {/* Message */}
               <div>
-                <div style={{ fontSize: "8px", color: "#4d7898", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px" }}>INTEL REPORT <span style={{ color: "rgba(180,210,240,0.20)", fontWeight: 400 }}>(최소 5자)</span></div>
+                <div style={{ fontSize: "8px", color: "#909090", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px" }}>INTEL REPORT <span style={{ color: "rgba(255,255,255,0.20)", fontWeight: 400 }}>(최소 5자)</span></div>
                 <textarea
                   rows={4}
                   maxLength={500}
                   value={fbMessage}
                   onChange={e => setFbMessage(e.target.value)}
                   placeholder="사용 소감, 버그, 개선 제안을 자유롭게..."
-                  style={{ width: "100%", background: "rgba(180,210,240,0.02)", resize: "none", border: "1px solid rgba(180,210,240,0.10)", color: "#b8cfe0", fontSize: "12px", padding: "10px 12px", outline: "none", fontFamily: "monospace", lineHeight: 1.6, boxSizing: "border-box", transition: "border-color 0.15s" }}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.02)", resize: "none", border: "1px solid rgba(255,255,255,0.10)", color: "#e0e0e0", fontSize: "12px", padding: "10px 12px", outline: "none", fontFamily: "var(--font-share-tech-mono), monospace", lineHeight: 1.6, boxSizing: "border-box", transition: "border-color 0.15s" }}
                   onFocus={e => { e.currentTarget.style.borderColor = "rgba(34,197,94,0.40)" }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(180,210,240,0.10)" }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)" }}
                 />
-                <div style={{ textAlign: "right", fontSize: "8px", color: "rgba(180,210,240,0.18)", marginTop: "4px" }}>{fbMessage.length}/500</div>
+                <div style={{ textAlign: "right", fontSize: "8px", color: "rgba(255,255,255,0.18)", marginTop: "4px" }}>{fbMessage.length}/500</div>
               </div>
               <button
                 onClick={handleFeedbackSubmit}
@@ -1504,10 +1552,10 @@ export default function Home() {
                   fontSize: "11px",
                   fontWeight: 900,
                   letterSpacing: "0.18em",
-                  fontFamily: "monospace",
-                  border: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "1px solid rgba(34,197,94,0.50)" : "1px solid rgba(180,210,240,0.08)",
+                  fontFamily: "var(--font-share-tech-mono), monospace",
+                  border: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "1px solid rgba(34,197,94,0.50)" : "1px solid rgba(255,255,255,0.08)",
                   background: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "rgba(34,197,94,0.08)" : "transparent",
-                  color: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "#22c55e" : "rgba(180,210,240,0.20)",
+                  color: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "#22c55e" : "rgba(255,255,255,0.20)",
                   cursor: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "pointer" : "not-allowed",
                   boxShadow: fbRating > 0 && fbMessage.trim().length >= 5 && !fbSubmitting ? "0 0 16px rgba(34,197,94,0.12)" : "none",
                   transition: "all 0.2s",
@@ -1546,7 +1594,7 @@ export default function Home() {
               "59,130,246"
             }, 0.35)`,
             boxShadow: "0 0 40px rgba(0,0,0,0.8)",
-            fontFamily: "monospace",
+            fontFamily: "var(--font-share-tech-mono), monospace",
           }}
         >
           {/* Accent line */}
@@ -1561,14 +1609,14 @@ export default function Home() {
           }} />
           <div style={{ padding: "16px 20px" }}>
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px", paddingBottom: "12px", borderBottom: "1px solid rgba(180,210,240,0.07)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               <div style={{
                 width: "6px", height: "6px", borderRadius: "50%",
                 background: authUI.status === "locating" ? "#f59e0b" : authUI.status === "verifying" ? "#3b82f6" : authUI.status === "success" ? "#22c55e" : "#ef4444",
                 animation: "beacon 2.4s ease-out infinite",
                 boxShadow: `0 0 6px ${authUI.status === "success" ? "#22c55e" : authUI.status === "denied" ? "#ef4444" : "#3b82f6"}`,
               }} />
-              <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", color: "#d4e2f0" }}>TACTICAL AUTHENTICATION</span>
+              <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", color: "#ffffff" }}>TACTICAL AUTHENTICATION</span>
             </div>
             {/* Logs */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", minHeight: "100px", marginBottom: "12px" }}>
@@ -1579,7 +1627,7 @@ export default function Home() {
                     fontSize: "10px",
                     lineHeight: 1.5,
                     color: authUI.status === "denied" || authUI.status === "error" ? "#ef4444" :
-                           authUI.status === "success" ? "#22c55e" : "#6ba3d0",
+                           authUI.status === "success" ? "#22c55e" : "#bdbdbd",
                     paddingLeft: "8px",
                     borderLeft: `2px solid ${
                       authUI.status === "denied" || authUI.status === "error" ? "rgba(239,68,68,0.40)" :
@@ -1593,7 +1641,7 @@ export default function Home() {
             </div>
             {/* Progress bar */}
             {(authUI.status === "locating" || authUI.status === "verifying") && (
-              <div style={{ width: "100%", height: "2px", background: "rgba(180,210,240,0.06)", position: "relative", overflow: "hidden" }}>
+              <div style={{ width: "100%", height: "2px", background: "rgba(255,255,255,0.06)", position: "relative", overflow: "hidden" }}>
                 <div
                   style={{
                     position: "absolute", top: 0, height: "100%", width: "33%",

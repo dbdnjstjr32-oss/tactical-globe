@@ -38,24 +38,24 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center font-mono relative overflow-hidden">
       {/* Background Cyberpunk scanline and glow effects */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_40%,rgba(0,255,136,0.08)_0%,transparent_60%)] z-0" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.08)_0%,transparent_60%)] z-0" />
       <div 
         className="absolute inset-0 pointer-events-none z-0 opacity-15"
         style={{
-          backgroundImage: "linear-gradient(rgba(0,255,136,0.1) 50%, transparent 50%)",
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 50%, transparent 50%)",
           backgroundSize: "100% 4px"
         }}
       />
 
-      <div className="relative z-10 w-full max-w-sm border border-emerald-500/30 bg-neutral-950/90 p-8 shadow-[0_0_40px_rgba(0,255,136,0.06)] rounded-sm">
+      <div className="relative z-10 w-full max-w-sm border border-white/30 bg-neutral-950/90 p-8 shadow-[0_0_40px_rgba(255,255,255,0.06)] rounded-sm">
         {/* Neon top bar */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white to-transparent" />
 
         <div className="mb-6 text-center">
-          <div className="text-[9px] text-emerald-500/50 tracking-[0.25em] font-bold uppercase mb-1">
+          <div className="text-[9px] text-white/50 tracking-[0.25em] font-bold uppercase mb-1">
             SECURE LINK PORTAL
           </div>
-          <h2 className="text-xl font-black text-emerald-400 tracking-wider">
+          <h2 className="text-xl font-black text-white tracking-wider">
             ADMINISTRATIVE CONSOLE
           </h2>
         </div>
@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter secure passcode..."
               disabled={loading}
-              className="w-full bg-black border border-emerald-500/20 text-emerald-400 placeholder-emerald-500/30 text-xs px-4 py-2.5 outline-none focus:border-emerald-500/60 focus:shadow-[0_0_10px_rgba(0,255,136,0.1)] transition-all duration-300 rounded-sm"
+              className="w-full bg-black border border-white/20 text-white placeholder-white/30 text-xs px-4 py-2.5 outline-none focus:border-white/60 focus:shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-all duration-300 rounded-sm"
               autoFocus
             />
           </div>
@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={!password.trim() || loading}
-            className="w-full bg-emerald-500/10 border border-emerald-400 text-emerald-400 text-xs font-bold py-3 uppercase tracking-widest cursor-pointer hover:bg-emerald-500/20 hover:shadow-[0_0_15px_rgba(0,255,136,0.2)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 rounded-sm"
+            className="w-full bg-white/10 border border-white text-white text-xs font-bold py-3 uppercase tracking-widest cursor-pointer hover:bg-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 rounded-sm"
           >
             {loading ? "AUTHENTICATING..." : "▶ DECRYPT & JOIN"}
           </button>

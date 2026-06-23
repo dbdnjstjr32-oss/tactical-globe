@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   await db.exec("PRAGMA journal_mode = WAL;");
   
   const encoder = new TextEncoder();
-  let interval: NodeJS.Timeout | null = null;
+  let interval: ReturnType<typeof setInterval> | null = null;
   let isClosed = false;
 
   const cleanup = async () => {
@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
       const pushData = async () => {
         if (isClosed) return;
         try {
-          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+          // Extend to 7 days since cached DB rows for GEOPOLITICS might be older
+          const timeLimit = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
           
           let query = `
             SELECT 
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
             ORDER BY created_at DESC 
             LIMIT 30
           `;
-          let params = [channel, twentyFourHoursAgo];
+          let params = [channel, timeLimit];
 
           if (channel === "GEOPOLITICS") {
             query = `
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
               ORDER BY created_at DESC 
               LIMIT 30
             `;
-            params = [twentyFourHoursAgo];
+            params = [timeLimit];
           }
 
           const rows = await db.all(query, params);
@@ -134,14 +135,14 @@ export async function GET(request: NextRequest) {
       // Initial push
       await pushData();
       
-      // Poll DB every 1 second
+      // Poll DB every 5 seconds
       interval = setInterval(async () => {
         if (signal.aborted) {
           await cleanup();
           return;
         }
         await pushData();
-      }, 1000);
+      }, 5000);
 
       signal.addEventListener("abort", () => {
         cleanup();

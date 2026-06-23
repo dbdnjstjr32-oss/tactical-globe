@@ -170,13 +170,13 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
         right: 0,
         width: "380px",
         height: "100vh",
-        background: "rgba(4, 8, 16, 0.97)",
+        background: "rgba(8, 8, 8, 0.97)",
         borderLeft: "1px solid rgba(var(--theme-rgb), 0.20)",
         boxShadow: "-16px 0 48px rgba(0,0,0,0.6), inset 1px 0 0 rgba(var(--theme-rgb), 0.05)",
         display: "flex",
         flexDirection: "column",
         zIndex: 1000,
-        fontFamily: "'Courier New', Courier, monospace",
+        fontFamily: "var(--font-share-tech-mono), monospace",
         backdropFilter: "blur(20px)",
       }}
     >
@@ -187,8 +187,8 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
       <div
         style={{
           padding: "14px 16px",
-          borderBottom: "1px solid rgba(180,210,240,0.07)",
-          background: "rgba(180,210,240,0.02)",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(255,255,255,0.02)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
@@ -206,11 +206,11 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: "8px", fontWeight: 700, letterSpacing: "0.18em", color: "#4d7898", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "8px", fontWeight: 700, letterSpacing: "0.18em", color: "#909090", textTransform: "uppercase" }}>
               SECURE COMMS // {channelLabel} CHANNEL
             </span>
           </div>
-          <h3 style={{ fontSize: "13px", fontWeight: 700, margin: 0, color: "#d4e2f0", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+          <h3 style={{ fontSize: "13px", fontWeight: 700, margin: 0, color: "#ffffff", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
             {incidentTitle}
           </h3>
           <div style={{ fontSize: "10px", color: "rgba(var(--theme-rgb), 0.6)", marginTop: "4px", letterSpacing: "0.08em" }}>
@@ -220,9 +220,9 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
         <button
           onClick={onClose}
           style={{
-            background: "rgba(180,210,240,0.05)",
-            border: "1px solid rgba(180,210,240,0.10)",
-            color: "rgba(180,210,240,0.50)",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            color: "rgba(255,255,255,0.50)",
             fontSize: "14px",
             cursor: "pointer",
             padding: "6px 10px",
@@ -230,8 +230,8 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
             transition: "all 0.15s",
             flexShrink: 0,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#d4e2f0"; e.currentTarget.style.borderColor = "rgba(180,210,240,0.25)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(180,210,240,0.50)"; e.currentTarget.style.borderColor = "rgba(180,210,240,0.10)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.50)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)"; }}
         >
           ✕
         </button>
@@ -250,7 +250,7 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
         }}
       >
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(184,207,224,0.35)", fontSize: "11px", letterSpacing: "0.15em" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.35)", fontSize: "11px", letterSpacing: "0.15em" }}>
             ESTABLISHING SECURE LINK...
           </div>
         ) : error ? (
@@ -258,7 +258,7 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
             ERROR: {error}
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(184,207,224,0.25)", fontSize: "10px", letterSpacing: "0.15em" }}>
+          <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.25)", fontSize: "10px", letterSpacing: "0.15em" }}>
             NO TRANSMISSIONS RECEIVED
           </div>
         ) : (
@@ -272,8 +272,10 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
               <div
                 key={post.id}
                 style={{
-                  background: isOsint ? "rgba(245,158,11,0.04)" : "rgba(180,210,240,0.02)",
-                  border: isOsint ? "1px solid rgba(245,158,11,0.20)" : "1px solid rgba(180,210,240,0.07)",
+                  background: isOsint ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.02)",
+                  borderTop: isOsint ? "1px solid rgba(245,158,11,0.20)" : "1px solid rgba(255,255,255,0.07)",
+                  borderRight: isOsint ? "1px solid rgba(245,158,11,0.20)" : "1px solid rgba(255,255,255,0.07)",
+                  borderBottom: isOsint ? "1px solid rgba(245,158,11,0.20)" : "1px solid rgba(255,255,255,0.07)",
                   borderLeft: `2px solid ${accentColor}`,
                   padding: "10px 12px",
                   display: "flex",
@@ -301,19 +303,19 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
                       {isOsint ? "OSINT" : post.trust_level || "GUEST"}
                     </span>
                   </div>
-                  <span style={{ fontSize: "9px", color: "rgba(184,207,224,0.25)", flexShrink: 0, fontFamily: "monospace" }}>
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.25)", flexShrink: 0, fontFamily: "var(--font-share-tech-mono), monospace" }}>
                     {timeStr}
                   </span>
                 </div>
 
                 {/* Content */}
-                <div style={{ fontSize: "12px", color: "#c8d9e8", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "12px", color: "#dcdcdc", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
                   {post.content}
                 </div>
 
                 {/* Coordinates */}
                 {post.lat != null && post.lng != null && (
-                  <div style={{ fontSize: "9px", color: `rgba(var(--theme-rgb), 0.45)`, letterSpacing: "0.08em", fontFamily: "monospace" }}>
+                  <div style={{ fontSize: "9px", color: `rgba(var(--theme-rgb), 0.45)`, letterSpacing: "0.08em", fontFamily: "var(--font-share-tech-mono), monospace" }}>
                     COORDS: {post.lat.toFixed(4)}°, {post.lng.toFixed(4)}°
                   </div>
                 )}
@@ -329,8 +331,8 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
         onSubmit={handleSend}
         style={{
           padding: "12px 14px",
-          borderTop: "1px solid rgba(180,210,240,0.07)",
-          background: "rgba(4,8,16,0.98)",
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(8,8,8,0.98)",
           display: "flex",
           flexDirection: "column",
           gap: "8px",
@@ -338,7 +340,7 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
       >
         {/* User info bar */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "9px", color: "rgba(184,207,224,0.40)", cursor: "pointer", letterSpacing: "0.08em" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "9px", color: "rgba(255,255,255,0.40)", cursor: "pointer", letterSpacing: "0.08em" }}>
             <input
               type="checkbox"
               checked={attachLocation}
@@ -347,7 +349,7 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
             />
             ATTACH COORDINATES
           </label>
-          <span style={{ fontSize: "9px", color: "rgba(184,207,224,0.25)", fontFamily: "monospace", letterSpacing: "0.08em" }}>
+          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-share-tech-mono), monospace", letterSpacing: "0.08em" }}>
             ID: {username}
           </span>
         </div>
@@ -362,31 +364,31 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
             disabled={loading || sending}
             style={{
               flex: 1,
-              background: "rgba(180,210,240,0.03)",
-              border: "1px solid rgba(180,210,240,0.12)",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.12)",
               padding: "8px 12px",
               fontSize: "12px",
-              color: "#b8cfe0",
+              color: "#e0e0e0",
               outline: "none",
-              fontFamily: "'Courier New', monospace",
+              fontFamily: "var(--font-share-tech-mono), monospace",
               transition: "border-color 0.15s",
             }}
             onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(var(--theme-rgb), 0.45)"; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(180,210,240,0.12)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
           />
           <button
             type="submit"
             disabled={!inputText.trim() || loading || sending}
             style={{
               background: !inputText.trim() || loading || sending ? "transparent" : "rgba(var(--theme-rgb), 0.10)",
-              border: !inputText.trim() || loading || sending ? "1px solid rgba(180,210,240,0.08)" : "1px solid rgba(var(--theme-rgb), 0.45)",
-              color: !inputText.trim() || loading || sending ? "rgba(180,210,240,0.25)" : "var(--theme-color)",
+              border: !inputText.trim() || loading || sending ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(var(--theme-rgb), 0.45)",
+              color: !inputText.trim() || loading || sending ? "rgba(255,255,255,0.25)" : "var(--theme-color)",
               fontSize: "11px",
               padding: "0 14px",
               cursor: !inputText.trim() || loading || sending ? "not-allowed" : "pointer",
               fontWeight: 700,
               letterSpacing: "0.12em",
-              fontFamily: "'Courier New', monospace",
+              fontFamily: "var(--font-share-tech-mono), monospace",
               transition: "all 0.15s",
               whiteSpace: "nowrap",
             }}
