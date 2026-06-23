@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      let lastCheckedId = "";
+      let lastPayload = "";
       
       const pushData = async () => {
         if (isClosed) return;
@@ -121,10 +121,14 @@ export async function GET(request: NextRequest) {
             };
           });
 
-          const currentTopId = formattedEvents.length > 0 ? formattedEvents[0].id : "";
-          if (currentTopId !== lastCheckedId) {
-            lastCheckedId = currentTopId;
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(formattedEvents)}\n\n`));
+          // Push when the *content* of the feed changes, not only when a new
+          // top item appears. Serializing the whole list lets us catch in-place
+          // updates too (severity/summary/status/update_count on existing rows),
+          // which the previous "compare only the top id" check silently missed.
+          const payload = JSON.stringify(formattedEvents);
+          if (payload !== lastPayload) {
+            lastPayload = payload;
+            controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
           }
         } catch (err) {
           console.error("SSE DB Fetch Error:", err);
