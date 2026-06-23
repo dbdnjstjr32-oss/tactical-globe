@@ -52,3 +52,11 @@ chrome_start.log
 CLAUDE.md
 AGENTS.md
 
+
+# Local runtime DB, caches, IDE & Python artifacts
+__pycache__/
+.idea/
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
