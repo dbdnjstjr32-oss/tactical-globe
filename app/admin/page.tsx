@@ -58,7 +58,9 @@ export default function AdminPage() {
   const [incidentId, setIncidentId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [incidents, setIncidents] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<
+    { id: string; title: string; region: string | null; lat: number | null; lng: number | null }[]
+  >([]);
   const [incidentSearch, setIncidentSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editingRadius, setEditingRadius] = useState<Record<string, string>>({});
@@ -206,7 +208,7 @@ export default function AdminPage() {
         const errData = await res.json();
         setFormError(errData.error || "방 생성 실패");
       }
-    } catch (err) {
+    } catch {
       setFormError("통신 오류 발생");
     } finally {
       setSubmitting(false);
@@ -341,7 +343,7 @@ export default function AdminPage() {
               <label className="block text-[9px] text-neutral-400 uppercase tracking-widest mb-1 font-bold">Channel Category</label>
               <select
                 value={roomChannel}
-                onChange={(e) => setRoomChannel(e.target.value as any)}
+                onChange={(e) => setRoomChannel(e.target.value as "GEOPOLITICS" | "ECONOMY" | "WEATHER")}
                 className="w-full bg-black border border-white/20 text-white text-xs px-3 py-2 outline-none focus:border-white/60 rounded-sm"
               >
                 <option value="GEOPOLITICS">🛰️ GEOPOLITICS (지정학적 위협)</option>

@@ -92,7 +92,7 @@ if (typeof window !== "undefined") {
                   reject(err);
                 });
             }
-          }).catch((err) => {
+          }).catch(() => {
             // Fallback directly to fetch on DB error
             fetch(url, fetchOpts)
               .then((res) => {
@@ -692,7 +692,8 @@ function MarkerPopup({
     const timer = setTimeout(() => {
       try {
         // Check if marker has been added to map (has _map or getMap)
-        const markerMap = (marker as any).getMap ? (marker as any).getMap() : (marker as any)._map;
+        const markerInternals = marker as { getMap?: () => unknown; _map?: unknown };
+        const markerMap = markerInternals.getMap ? markerInternals.getMap() : markerInternals._map;
         if (markerMap && !popup.isOpen()) {
           marker.togglePopup();
         }

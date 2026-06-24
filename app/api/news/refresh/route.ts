@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { exec } from "child_process";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const projectRoot = process.cwd();
     
@@ -25,10 +25,11 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "REFRESH_TRIGGERED"
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to trigger refresh:", error);
+    const details = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "REFRESH_TRIGGER_FAILED", details: error.message },
+      { error: "REFRESH_TRIGGER_FAILED", details },
       { status: 500 }
     );
   }

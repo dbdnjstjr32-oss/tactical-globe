@@ -84,8 +84,12 @@ export async function POST(
     // ── Bayesian spatial-trust: distance to room epicenter + trust gate ──
     let spatialDistanceKm: number | null = null;
     let isVerified = 0;
-    const roomGeo = db.prepare("SELECT lat, lng FROM rooms WHERE id = ?").get(roomId) as any;
-    const userRow = db.prepare("SELECT trust_score FROM users WHERE id = ?").get(userId) as any;
+    const roomGeo = db.prepare("SELECT lat, lng FROM rooms WHERE id = ?").get(roomId) as
+      | { lat: number | null; lng: number | null }
+      | undefined;
+    const userRow = db.prepare("SELECT trust_score FROM users WHERE id = ?").get(userId) as
+      | { trust_score: number | null }
+      | undefined;
     const trustScore = userRow?.trust_score ?? 0.5;
     if (roomGeo?.lat != null && roomGeo?.lng != null && finalLat != null && finalLng != null) {
       spatialDistanceKm = haversineKm(finalLat, finalLng, roomGeo.lat, roomGeo.lng);
@@ -106,7 +110,9 @@ export async function POST(
 
     // God Mode: escalate the linked incident to CRITICAL
     if (godMode) {
-      const r = db.prepare("SELECT incident_id FROM rooms WHERE id = ?").get(roomId) as any;
+      const r = db.prepare("SELECT incident_id FROM rooms WHERE id = ?").get(roomId) as
+        | { incident_id: string | null }
+        | undefined;
       if (r?.incident_id) {
         db.prepare("UPDATE incidents SET status='CRITICAL' WHERE id = ?").run(r.incident_id);
       }
@@ -121,9 +127,10 @@ export async function POST(
     `).get(postId);
 
     return NextResponse.json({ success: true, post: newPost });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Post creation error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }

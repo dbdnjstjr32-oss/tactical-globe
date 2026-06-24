@@ -6,7 +6,7 @@ import { NextResponse } from "next/server"
 // pizzint.watch는 Next.js SSR 기반 — 서버에서 HTML 긁어 파싱
 // 의도적으로 우리 WATCHCON과 독립된 OSINT 교차참조 지표 (블렌딩 안 함)
 
-let cachedData: any = null;
+let cachedData: ReturnType<typeof parsePizzaHtml> | null = null;
 let cacheTime: number = 0;
 const CACHE_TTL = 30 * 1000; // 30초 — 외부 pizzint 갱신을 빠르게 반영
 
@@ -105,7 +105,7 @@ export async function GET() {
     cachedData = parsed;
     cacheTime = now;
     return NextResponse.json({ ...parsed, cached: false }, { headers: NO_STORE });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Pizza fetch failed, checking fallback cache:", err);
 
     // 3. Stale cache fallback
@@ -125,7 +125,7 @@ export async function GET() {
       status: "OFFLINE",
       color: "#666666",
       lastUpdated: new Date().toISOString(),
-      error: err?.message || "FETCH_FAILED",
+      error: (err instanceof Error ? err.message : null) || "FETCH_FAILED",
       cached: false,
     }, { status: 200, headers: NO_STORE });
   }

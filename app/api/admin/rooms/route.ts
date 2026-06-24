@@ -29,9 +29,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, rooms });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin rooms fetch error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }
@@ -77,16 +78,17 @@ export async function POST(request: NextRequest) {
     const createdRoom = db.prepare("SELECT * FROM rooms WHERE id = ?").get(roomId);
 
     return NextResponse.json({ success: true, room: createdRoom });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin room create error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }
 }
 
 export async function PATCH(request: NextRequest) {
-  let db: any;
+  let db: ReturnType<typeof getDb> | undefined;
   try {
     const body = await request.json();
     const { id, status, radius_km } = body;
@@ -142,16 +144,17 @@ export async function PATCH(request: NextRequest) {
     const updatedRoom = db.prepare("SELECT * FROM rooms WHERE id = ?").get(id);
 
     return NextResponse.json({ success: true, room: updatedRoom });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin room update error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  let db: any;
+  let db: ReturnType<typeof getDb> | undefined;
   try {
     const body = await request.json();
     const { id } = body;
@@ -160,28 +163,29 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ROOM_ID_REQUIRED" }, { status: 400 });
     }
 
-    db = getDb();
+    const conn = (db = getDb());
 
     // Verify room exists
-    const room = db.prepare("SELECT id FROM rooms WHERE id = ?").get(id);
+    const room = conn.prepare("SELECT id FROM rooms WHERE id = ?").get(id);
     if (!room) {
       return NextResponse.json({ error: "ROOM_NOT_FOUND" }, { status: 404 });
     }
 
     // Begin transaction for safety since we're deleting both posts and rooms
-    const deleteTx = db.transaction(() => {
+    const deleteTx = conn.transaction(() => {
       // 1. Delete associated posts
-      db.prepare("DELETE FROM posts WHERE room_id = ?").run(id);
+      conn.prepare("DELETE FROM posts WHERE room_id = ?").run(id);
       // 2. Delete room
-      db.prepare("DELETE FROM rooms WHERE id = ?").run(id);
+      conn.prepare("DELETE FROM rooms WHERE id = ?").run(id);
     });
 
     deleteTx();
 
     return NextResponse.json({ success: true, message: "Room and associated posts deleted successfully" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin room delete error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }

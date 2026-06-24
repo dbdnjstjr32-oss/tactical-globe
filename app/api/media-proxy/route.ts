@@ -109,8 +109,8 @@ export async function GET(request: NextRequest) {
         "Content-Security-Policy": "default-src 'none'; img-src data:",
       },
     });
-  } catch (e: any) {
-    const reason = e?.name === "AbortError" ? "TIMEOUT" : "FETCH_FAIL";
+  } catch (e) {
+    const reason = e instanceof Error && e.name === "AbortError" ? "TIMEOUT" : "FETCH_FAIL";
     return NextResponse.json({ error: reason }, { status: 502 });
   } finally {
     clearTimeout(timer);

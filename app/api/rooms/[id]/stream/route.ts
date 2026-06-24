@@ -53,7 +53,7 @@ export async function GET(
             JOIN users u ON p.user_id = u.id
             WHERE p.room_id = ? AND p.created_at > ?
             ORDER BY p.created_at ASC
-          `).all(roomId, lastEventTime) as any[];
+          `).all(roomId, lastEventTime) as Array<{ created_at: string }>;
 
           if (newPosts.length > 0) {
             // Update lastEventTime to the most recent post timestamp

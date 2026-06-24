@@ -8,8 +8,8 @@ export interface SSEConnection {
 
 export function connectToSSE(
   path: string,
-  onMessage: (data: any) => void,
-  onError?: (error: any) => void
+  onMessage: (data: unknown) => void,
+  onError?: (error: unknown) => void
 ): SSEConnection {
   const url = `${BASE_URL}${path}`;
   console.log(`[SSE] Connecting to: ${url}`);

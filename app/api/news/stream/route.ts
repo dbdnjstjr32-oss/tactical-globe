@@ -14,12 +14,20 @@ async function getTacticalDatabase() {
   });
 }
 
+type StreamRow = {
+  lat: number;
+  lng: number;
+  severity: number;
+  watchcon_trigger: number;
+  [key: string]: unknown;
+};
+
 export async function GET(request: NextRequest) {
   const signal = request.signal;
   const { searchParams } = new URL(request.url);
   const channel = searchParams.get("channel") || "GEOPOLITICS";
 
-  let db = await getTacticalDatabase();
+  const db = await getTacticalDatabase();
   await db.exec("PRAGMA journal_mode = WAL;");
   
   const encoder = new TextEncoder();
@@ -101,13 +109,13 @@ export async function GET(request: NextRequest) {
             params = [timeLimit];
           }
 
-          const rows = await db.all(query, params);
+          const rows = await db.all<StreamRow[]>(query, params);
 
-          const validRows = rows.filter((row: any) => 
+          const validRows = rows.filter((row) =>
             row.lat && row.lng && !isNaN(row.lat) && !isNaN(row.lng) && row.lat !== 0 && row.lng !== 0
           );
 
-          const formattedEvents = validRows.map((row: any) => {
+          const formattedEvents = validRows.map((row) => {
             let calcLevel = "NOMINAL";
             if (row.severity >= 0.8) calcLevel = "CRITICAL";
             else if (row.severity >= 0.5) calcLevel = "ELEVATED";

@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
     let finalLng = lng !== undefined ? lng : null;
 
     if (incidentId && (!finalLat || !finalLng)) {
-      const incident = db.prepare("SELECT region, country, lat, lng FROM incidents WHERE id = ?").get(incidentId) as any;
+      const incident = db.prepare("SELECT region, country, lat, lng FROM incidents WHERE id = ?").get(incidentId) as
+        | { region: string | null; country: string | null; lat: number | null; lng: number | null }
+        | undefined;
       if (incident) {
         finalRegion = finalRegion || incident.region;
         finalCountry = finalCountry || incident.country;
@@ -65,9 +67,10 @@ export async function POST(request: NextRequest) {
     const newRoom = db.prepare("SELECT * FROM rooms WHERE id = ?").get(roomId);
 
     return NextResponse.json({ success: true, room: newRoom });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Room creation error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }
@@ -80,9 +83,10 @@ export async function GET(request: NextRequest) {
     const channel = request.nextUrl.searchParams.get("channel") || "GEOPOLITICS";
     const rooms = db.prepare("SELECT * FROM rooms WHERE channel = ? ORDER BY last_activity DESC").all(channel);
     return NextResponse.json({ success: true, rooms });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Fetch rooms error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }

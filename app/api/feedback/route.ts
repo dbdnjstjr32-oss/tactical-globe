@@ -55,13 +55,13 @@ export async function POST(request: NextRequest) {
     db.close();
 
     return NextResponse.json({ success: true, id: result.lastInsertRowid }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[FEEDBACK] POST error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const db = getDb();
     const rows = db.prepare(`
@@ -70,8 +70,8 @@ export async function GET(_request: NextRequest) {
       ORDER BY created_at DESC
       LIMIT 100
     `).all();
-    const count = (db.prepare("SELECT COUNT(*) as cnt FROM feedbacks").get() as any).cnt;
-    const avgRating = (db.prepare("SELECT AVG(rating) as avg FROM feedbacks").get() as any).avg;
+    const count = (db.prepare("SELECT COUNT(*) as cnt FROM feedbacks").get() as { cnt: number }).cnt;
+    const avgRating = (db.prepare("SELECT AVG(rating) as avg FROM feedbacks").get() as { avg: number | null }).avg;
     db.close();
 
     return NextResponse.json({
@@ -81,7 +81,7 @@ export async function GET(_request: NextRequest) {
     }, {
       headers: { "Cache-Control": "no-store" }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("[FEEDBACK] GET error:", error);
     return NextResponse.json({ feedbacks: [], total: 0, average_rating: 0 }, { status: 500 });
   }

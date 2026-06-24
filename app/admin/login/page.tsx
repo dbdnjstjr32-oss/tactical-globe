@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
       } else {
         setError("인증 실패: 패스워드가 올바르지 않습니다.");
       }
-    } catch (err) {
+    } catch {
       setError("서버 통신 실패: 연결 상태를 확인하십시오.");
     } finally {
       setLoading(false);

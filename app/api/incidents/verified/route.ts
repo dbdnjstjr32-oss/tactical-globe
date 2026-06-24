@@ -18,11 +18,12 @@ export async function GET() {
       FROM posts p
       JOIN rooms r ON p.room_id = r.id
       WHERE p.is_verified = 1 AND r.incident_id IS NOT NULL
-    `).all() as any[];
+    `).all() as Array<{ id: string }>;
     return NextResponse.json({ ids: rows.map((r) => r.id) });
-  } catch (e: any) {
+  } catch (e) {
     console.error("Verified incidents fetch error:", e);
-    return NextResponse.json({ ids: [], error: e.message }, { status: 500 });
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ ids: [], error: message }, { status: 500 });
   } finally {
     if (db) db.close();
   }

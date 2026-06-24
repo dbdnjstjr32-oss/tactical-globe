@@ -80,7 +80,7 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
         const listRes = await fetch(`/api/rooms?channel=${encodeURIComponent(channel)}`);
         if (!listRes.ok) throw new Error("Failed to load rooms list");
         const listData = await listRes.json();
-        let targetRoom = listData.rooms?.find((r: any) => r.incident_id === incidentId || r.id === incidentId);
+        let targetRoom = listData.rooms?.find((r: Room) => r.incident_id === incidentId || r.id === incidentId);
         if (!targetRoom) {
           const createRes = await fetch("/api/rooms", {
             method: "POST",
@@ -115,8 +115,11 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
             }
           } catch (e) { console.error("SSE parse error", e); }
         };
-      } catch (err: any) {
-        if (active) { setError(err.message || "Failed to initialize room"); setLoading(false); }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : "Failed to initialize room");
+          setLoading(false);
+        }
       }
     };
     initRoom();
@@ -266,7 +269,6 @@ export function RoomPanel({ incidentId, incidentTitle, region, channel, onClose 
             const isOsint = post.user_id === "osint_worker" || post.trust_level === "OSINT";
             const timeStr = new Date(post.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
             const accentColor = isOsint ? "#f59e0b" : "var(--theme-color)";
-            const accentRgb = isOsint ? "245,158,11" : "var(--theme-rgb)";
 
             return (
               <div

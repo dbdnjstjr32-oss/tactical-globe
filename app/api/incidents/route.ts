@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import Database from "better-sqlite3";
 import path from "path";
 
@@ -14,7 +14,7 @@ function getDb() {
   return db;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   let db;
   try {
     db = getDb();
@@ -26,9 +26,10 @@ export async function GET(request: NextRequest) {
       LIMIT 50
     `).all();
     return NextResponse.json({ success: true, incidents });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Fetch incidents error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }

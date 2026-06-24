@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-  } catch (error: any) {
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+  } catch (error) {
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   }
 }

@@ -50,13 +50,11 @@ export default function WatchconPanel({
   watchconStage,
   onStageChange,
   onAutoMode,
-  themeColor,
   isMinimalTactical,
   onToggleMinimalTactical,
   readOnly = false
 }: WatchconPanelProps) {
   const info = WATCHCON_STAGES[watchconStage] || WATCHCON_STAGES[4]
-  const fillPct = ((6 - watchconStage) / 5) * 100
 
   const stageConfig: Record<number, { color: string; rgb: string; label: string }> = {
     5: { color: '#22c55e', rgb: '34,197,94',   label: 'NORMAL'   },

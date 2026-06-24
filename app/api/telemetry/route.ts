@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const telemetryPath = path.join(process.cwd(), "data", "telemetry.json");
   
   const ngrokHeaders = {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const telemetry = JSON.parse(data);
     
     return NextResponse.json(telemetry, { headers: ngrokHeaders });
-  } catch (error: any) {
+  } catch {
     // If telemetry.json does not exist yet or is malformed, return default metrics
     const defaultTelemetry = {
       rss_fetch_latency: 0.0,

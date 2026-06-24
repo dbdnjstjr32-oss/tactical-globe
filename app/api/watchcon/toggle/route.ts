@@ -8,7 +8,7 @@ async function getWatchcon() {
   try {
     const data = await fs.readFile(WATCHCON_PATH, "utf-8")
     return JSON.parse(data)
-  } catch (error) {
+  } catch {
     // Default fallback: stage 4, override false
     const fallback = { stage: 4, override: false, timestamp: new Date().toISOString() }
     try {
@@ -21,7 +21,7 @@ async function getWatchcon() {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const watchcon = await getWatchcon()
   return NextResponse.json(watchcon, {
     headers: {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(WATCHCON_PATH, JSON.stringify(updated, null, 2), "utf-8")
 
     return NextResponse.json({ success: true, ...updated })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "FAILED_TO_UPDATE_WATCHCON" }, { status: 500 })
   }
 }

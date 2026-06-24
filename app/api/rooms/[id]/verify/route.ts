@@ -41,7 +41,9 @@ export async function POST(
     }
 
     db = getDb();
-    const room = db.prepare("SELECT lat, lng, radius_km, status FROM rooms WHERE id = ?").get(roomId) as any;
+    const room = db.prepare("SELECT lat, lng, radius_km, status FROM rooms WHERE id = ?").get(roomId) as
+      | { lat: number | null; lng: number | null; radius_km: number | null; status: string }
+      | undefined;
 
     if (!room || room.status !== 'ACTIVE') {
       return NextResponse.json({ allowed: false, reason: 'ROOM_NOT_ACTIVE' }, { status: 403 });
@@ -70,9 +72,10 @@ export async function POST(
     } else {
       return NextResponse.json({ allowed: false, distance, limit: ALLOWED_RADIUS_KM, error: "OUT_OF_RANGE" }, { status: 403 });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Geofence verify error:", error);
-    return NextResponse.json({ error: "SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }

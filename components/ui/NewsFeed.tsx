@@ -22,7 +22,7 @@ export interface TacticalEvent {
   created_at: string
   first_seen: string
   related_titles: string[]
-  related_articles: any[]
+  related_articles: unknown[]
   msg?: string
   time?: string
   channel?: string | null
@@ -79,7 +79,6 @@ function SeverityBar({ severity, themeColor }: { severity: number; themeColor: s
 
 export default function NewsFeed({
   incidents,
-  selectedChannel,
   themeColor,
   onIncidentClick,
   activeIncidentId

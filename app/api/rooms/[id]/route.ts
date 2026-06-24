@@ -29,7 +29,7 @@ export async function GET(
       FROM rooms r
       LEFT JOIN users u ON r.created_by = u.id
       WHERE r.id = ?
-    `).get(id) as any;
+    `).get(id) as Record<string, unknown> | undefined;
 
     if (!room) {
       return NextResponse.json({ error: "ROOM_NOT_FOUND" }, { status: 404 });
@@ -53,9 +53,10 @@ export async function GET(
       room,
       posts: orderedPosts
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get room info error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details: error.message }, { status: 500 });
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR", details }, { status: 500 });
   } finally {
     if (db) db.close();
   }
