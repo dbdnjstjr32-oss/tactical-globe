@@ -1,14 +1,11 @@
 "use client"
 
 import React from "react"
-import type { TacticalToggles } from "./TacticalCanvas"
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
   themeColor: string
-  tacticalToggles: TacticalToggles
-  onTacticalToggle: (key: keyof TacticalToggles, value: boolean) => void
   isMinimalTactical: boolean
   setIsMinimalTactical: (val: boolean) => void
   focusMode: boolean
@@ -74,7 +71,6 @@ function SettingSection({ title, children }: { title: string; children: React.Re
 
 export default function SettingsModal({
   isOpen, onClose, themeColor,
-  tacticalToggles, onTacticalToggle,
   isMinimalTactical, setIsMinimalTactical,
   focusMode, setFocusMode,
   showHeatmap, setShowHeatmap,
@@ -129,57 +125,22 @@ export default function SettingsModal({
               onClick={() => setIsMinimalTactical(!isMinimalTactical)} 
               themeColor={themeColor} 
             />
-            <SettingRow 
-              label="FOCUS MODE" 
+            <SettingRow
+              label="FOCUS MODE"
               desc="Hides side panels to focus entirely on the tactical map."
-              on={focusMode} 
-              onClick={() => setFocusMode(!focusMode)} 
-              themeColor={themeColor} 
-            />
-            <SettingRow 
-              label="RADAR SCAN OVERLAY" 
-              desc="Displays sweeping radar scanline on the map surface."
-              on={tacticalToggles.isScanline} 
-              onClick={() => onTacticalToggle("isScanline", !tacticalToggles.isScanline)} 
-              themeColor={themeColor} 
+              on={focusMode}
+              onClick={() => setFocusMode(!focusMode)}
+              themeColor={themeColor}
             />
           </SettingSection>
 
           <SettingSection title="[ TACTICAL DATA LAYERS ]">
-            <SettingRow 
-              label="AIRCRAFT & DRONES" 
-              desc="Render real-time ADS-B and flight tracking data."
-              on={tacticalToggles.showAircraft} 
-              onClick={() => onTacticalToggle("showAircraft", !tacticalToggles.showAircraft)} 
-              themeColor={themeColor} 
-            />
-            <SettingRow 
-              label="NAVAL VESSELS" 
-              desc="Render real-time AIS marine traffic and vessel positions."
-              on={tacticalToggles.showVessels} 
-              onClick={() => onTacticalToggle("showVessels", !tacticalToggles.showVessels)} 
-              themeColor={themeColor} 
-            />
-            <SettingRow 
-              label="DATA CENTER NET" 
-              desc="Show strategic data center nodes and sub-oceanic connections."
-              on={tacticalToggles.showDataCenters} 
-              onClick={() => onTacticalToggle("showDataCenters", !tacticalToggles.showDataCenters)} 
-              themeColor={themeColor} 
-            />
-            <SettingRow 
-              label="SATELLITE ORBITS" 
-              desc="Overlay low-earth orbit (LEO) satellite tracking paths."
-              on={tacticalToggles.showSatTracks} 
-              onClick={() => onTacticalToggle("showSatTracks", !tacticalToggles.showSatTracks)} 
-              themeColor={themeColor} 
-            />
-            <SettingRow 
-              label="THREAT HEATMAP" 
+            <SettingRow
+              label="THREAT HEATMAP"
               desc="Visualize regional incident density with heatmap overlay."
-              on={showHeatmap} 
-              onClick={() => setShowHeatmap(!showHeatmap)} 
-              themeColor={themeColor} 
+              on={showHeatmap}
+              onClick={() => setShowHeatmap(!showHeatmap)}
+              themeColor={themeColor}
             />
           </SettingSection>
 

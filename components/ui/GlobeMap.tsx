@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useEffect, useState, useRef, useCallback } from "react"
-import { Map, MapMarker, MarkerContent, MarkerPopup } from "@/components/ui/map"
+import { Map, MapMarker, MarkerPopup } from "@/components/ui/map"
+import type { Map as MaplibreMap, GeoJSONSource, MapLibreEvent } from "maplibre-gl"
 import { TacticalEvent } from "./NewsFeed"
-import TacticalCanvas, { type TacticalToggles } from "./TacticalCanvas"
 
 // 🛰️ 고해상도 실제 위성 지구본 스타일 사양 (ESRI World Imagery + Boundaries & Places)
 const satelliteStyle: any = {
@@ -55,10 +55,10 @@ class MatrixCapturerLayer {
   id = "threejs-orbit-layer";
   type = "custom" as const;
   renderingMode = "3d" as const;
-  map: any = null;
+  map: MaplibreMap | null = null;
   onDrawCanvas: ((matrix: number[]) => void) | null = null;
 
-  onAdd(map: any, gl: WebGLRenderingContext) {
+  onAdd(map: MaplibreMap) {
     this.map = map;
   }
 
@@ -152,14 +152,13 @@ function projectPoint(mercatorPt: number[], matrix: number[], width: number, hei
   const z = mercatorPt[2];
   const w = 1.0;
 
-  const m0 = matrix[0], m1 = matrix[1], m2 = matrix[2], m3 = matrix[3];
-  const m4 = matrix[4], m5 = matrix[5], m6 = matrix[6], m7 = matrix[7];
-  const m8 = matrix[8], m9 = matrix[9], m10 = matrix[10], m11 = matrix[11];
-  const m12 = matrix[12], m13 = matrix[13], m14 = matrix[14], m15 = matrix[15];
+  const m0 = matrix[0], m1 = matrix[1], m3 = matrix[3];
+  const m4 = matrix[4], m5 = matrix[5], m7 = matrix[7];
+  const m8 = matrix[8], m9 = matrix[9], m11 = matrix[11];
+  const m12 = matrix[12], m13 = matrix[13], m15 = matrix[15];
 
   const rx = m0 * x + m4 * y + m8 * z + m12 * w;
   const ry = m1 * x + m5 * y + m9 * z + m13 * w;
-  const rz = m2 * x + m6 * y + m10 * z + m14 * w;
   const rw = m3 * x + m7 * y + m11 * z + m15 * w;
 
   const ndcX = rx / rw;
@@ -185,7 +184,6 @@ interface GlobeMapProps {
   showHeatmap: boolean
   isMinimalTactical: boolean
   currentTarget: TacticalEvent | null
-  tacticalToggles: TacticalToggles
 }
 
 export default function GlobeMap({
@@ -201,8 +199,7 @@ export default function GlobeMap({
   selectedChannel,
   showHeatmap,
   isMinimalTactical,
-  currentTarget,
-  tacticalToggles
+  currentTarget
 }: GlobeMapProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -225,7 +222,7 @@ export default function GlobeMap({
 
   const [renderedPopupIncident, setRenderedPopupIncident] = useState<TacticalEvent | null>(null)
   const [isPopupExiting, setIsPopupExiting] = useState(false)
-  const [isStyleLoading, setIsStyleLoading] = useState(false)
+  const [, setIsStyleLoading] = useState(false)
   const [showBlurOverlay, setShowBlurOverlay] = useState(false)
   const [fadeBlurOverlay, setFadeBlurOverlay] = useState(false)
   
@@ -315,7 +312,7 @@ export default function GlobeMap({
     }
   }, [currentTarget, renderedPopupIncident, watchconStage, glitchDuration])
 
-  const setupMapLayers = useCallback((map: any) => {
+  const setupMapLayers = useCallback((map: MaplibreMap) => {
     if (!map) return
 
     if (!map.getSource("threat-zones")) {
@@ -339,8 +336,8 @@ export default function GlobeMap({
       })
     } else {
       const source = map.getSource("threat-zones")
-      if (source && typeof (source as any).setData === "function") {
-        (source as any).setData({
+      if (source && typeof (source as GeoJSONSource).setData === "function") {
+        (source as GeoJSONSource).setData({
           type: "FeatureCollection",
           features: incidents.map(ev => ({
             type: "Feature",
@@ -433,8 +430,7 @@ export default function GlobeMap({
         ["case", ["==", ["get", "verified"], 1], 0.95, 0.35])
     }
 
-    // Globe-only decorative orbit layer is disabled in the flat tactical view;
-    // live tracking is handled by the TacticalCanvas overlay instead.
+    // Globe-only decorative orbit layer is disabled in the flat tactical view.
     if (map.getLayer("threejs-orbit-layer")) {
       map.removeLayer("threejs-orbit-layer")
     }
@@ -612,11 +608,12 @@ export default function GlobeMap({
             return { url };
           }
         } as any)}
-        onLoad={(evt: any) => {
+        onLoad={(evt: MapLibreEvent) => {
           const map = evt.target
-          
-          if (map && typeof map.setFog === "function" && map.getProjection?.()?.type === "globe") {
-            map.setFog({
+          // setFog is only present on globe-capable builds — call it structurally.
+          const fogMap = map as { setFog?: (opts: Record<string, unknown>) => void }
+          if (map && typeof fogMap.setFog === "function" && map.getProjection?.()?.type === "globe") {
+            fogMap.setFog({
               color: opsMode === "ACTIVE" ? "#000a15" : "#000000",
               "high-color": "#000000",
               "space-color": "#000000",
@@ -627,7 +624,7 @@ export default function GlobeMap({
 
           setupMapLayers(map)
 
-          map.on('click', 'threat-points', (e: any) => {
+          map.on('click', 'threat-points', (e) => {
             if (!e.features || e.features.length === 0) return;
             const feature = e.features[0];
             const props = feature.properties;
@@ -647,7 +644,7 @@ export default function GlobeMap({
             map.getCanvas().style.cursor = '';
           });
 
-          map.on("movestart", (e: any) => {
+          map.on("movestart", (e) => {
             if (!isAutoPilotRef.current || (e && e.originalEvent)) {
               return
             }
@@ -732,9 +729,6 @@ export default function GlobeMap({
           </MapMarker>
         )}
       </Map>
-
-      {/* 미래형 전장 ui live-tracking overlay (aircraft / vessels / satellites / datacenters) */}
-      <TacticalCanvas mapRef={mapRef} {...tacticalToggles} />
 
       {showBlurOverlay && (
         <div

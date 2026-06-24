@@ -1,7 +1,6 @@
 "use client"
 
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
-import { TacticalOverlay } from "@/components/ui/tactical-overlay"
+import React, { useEffect, useState, useRef, useMemo } from "react"
 import { RoomPanel } from "@/components/ui/RoomPanel"
 import PizzaIndex from "@/components/ui/PizzaIndex"
 import WatchconPanel, { getWatchconColor, getWatchconRgb, WATCHCON_STAGES } from "@/components/ui/WatchconPanel"
@@ -9,7 +8,6 @@ import NewsFeed, { TacticalEvent } from "@/components/ui/NewsFeed"
 import WeatherPanel from "@/components/ui/WeatherPanel"
 import GlobeMap from "@/components/ui/GlobeMap"
 import SettingsModal from "@/components/ui/SettingsModal"
-import type { TacticalToggles } from "@/components/ui/TacticalCanvas"
 
 // ── CONSENT ──────────────────────────────────────────────────
 const CONSENT_KEY = "tactical_globe_beta_consent_v1"
@@ -127,7 +125,7 @@ const FALLBACK_NEWS_FEED: TacticalEvent[] = [
   }
 ]
 
-function formatKstDate(dateInput: any): string {
+function formatKstDate(dateInput: string | number | Date | null | undefined): string {
   if (!dateInput) return "REALTIME"
   try {
     return new Date(dateInput).toLocaleString("ko-KR", {
@@ -212,8 +210,8 @@ function LiveDot({ color }: { color?: string }) {
   )
 }
 
-function MetricBar({ label, value, maxValue, unit, themeColor, themeRgb }: {
-  label: string; value: number; maxValue: number; unit: string; themeColor: string; themeRgb: string
+function MetricBar({ label, value, maxValue, unit, themeColor }: {
+  label: string; value: number; maxValue: number; unit: string; themeColor: string
 }) {
   const pct = Math.min((value / maxValue) * 100, 100)
   const dangerColor = pct > 80 ? "#ef4444" : pct > 60 ? "#f97316" : themeColor
@@ -254,7 +252,7 @@ export default function Home() {
   }, [consentGiven])
 
   const mapRef = useRef<any>(null)
-  const [isCameraMoving, setIsCameraMoving] = useState(false)
+  const [isCameraMoving] = useState(false)
   const [time, setTime] = useState<Date | null>(null)
   const [fps, setFps] = useState(60)
   const [allIncidents, setAllIncidents] = useState<TacticalEvent[]>(FALLBACK_NEWS_FEED)
@@ -269,7 +267,9 @@ export default function Home() {
   useEffect(() => { watchconStageRef.current = watchconStage }, [watchconStage])
   const [watchconOverride, setWatchconOverride] = useState<boolean>(false)
   const [activeRoom, setActiveRoom] = useState<{ incidentId: string; incidentTitle: string; region: string } | null>(null)
-  const [activeRooms, setActiveRooms] = useState<any[]>([])
+  const [activeRooms, setActiveRooms] = useState<
+    { id: string; incident_id?: string; title: string; region: string; country?: string; lat?: number; lng?: number }[]
+  >([])
   const [authUI, setAuthUI] = useState<{ active: boolean; status: "locating"|"verifying"|"success"|"denied"|"error"; logs: string[] }>({ active: false, status: "locating", logs: [] })
   const [activeChildFeedTab, setActiveChildFeedTab] = useState<number>(0)
   const [isMinimalTactical, setIsMinimalTactical] = useState<boolean>(false)
@@ -277,11 +277,6 @@ export default function Home() {
   const [focusMode, setFocusMode] = useState<boolean>(false)
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true)
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
-  const [tacticalToggles, setTacticalToggles] = useState<TacticalToggles>({
-    showAircraft: true, showVessels: false, showDataCenters: false, showSatTracks: true, isScanline: false,
-  })
-  const handleTacticalToggle = (key: keyof TacticalToggles, value: boolean) =>
-    setTacticalToggles((prev) => ({ ...prev, [key]: value }))
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [selectedChannel, setSelectedChannel] = useState<"GEOPOLITICS"|"ECONOMY"|"WEATHER"|"CYBER_AI">("GEOPOLITICS")
   const [selectedRegion, setSelectedRegion] = useState<keyof typeof REGION_COORDS>("GLOBAL")
@@ -314,7 +309,6 @@ export default function Home() {
   }
   const themeColor = currentWatchconInfo.color
   const themeRgb = currentWatchconInfo.rgb
-  const glitchDuration = isMinimalTactical ? 0 : currentWatchconInfo.glitch
 
   const displayIncidents = useMemo(() => {
     // GEOPOLITICS feed also carries TELEGRAM-sourced incidents (mirrors the SSE
@@ -563,12 +557,12 @@ export default function Home() {
       return
     }
     setAuthUI({ active: true, status: "locating", logs: ["[SYSTEM] 보안 구역 접근 절차 개시...", "[SYSTEM] 원격 보안 시스템 상태 조회 중..."] })
-    let targetRoom: any = null
+    let targetRoom: { id: string } | null = null
     try {
       const resRooms = await fetch(`/api/rooms?channel=${selectedChannel}`)
       const dataRooms = await resRooms.json()
       const rooms = dataRooms.rooms || []
-      let foundRoom = rooms.find((r: any) => r.incident_id === incidentId)
+      let foundRoom = rooms.find((r: { incident_id?: string; id: string }) => r.incident_id === incidentId)
       if (!foundRoom && incidentLat != null && incidentLng != null) {
         const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
           const R = 6371
@@ -592,7 +586,7 @@ export default function Home() {
         return
       }
       targetRoom = foundRoom
-    } catch (err) {
+    } catch {
       setAuthUI({ active: true, status: "error", logs: ["[ERROR] 보안 상태 조회 실패."] })
       setTimeout(() => setAuthUI(prev => ({ ...prev, active: false })), 3000)
       return
@@ -604,7 +598,7 @@ export default function Home() {
         setAuthUI(prev => ({ ...prev, status: "verifying", logs: [...prev.logs, `[GPS] 좌표 획득: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, "[SERVER] 작전 반경 검증 중..."] }))
         try {
           const userId = (typeof window !== "undefined" && localStorage.getItem("user_id")) || undefined
-          const res = await fetch(`/api/rooms/${targetRoom.id}/verify`, {
+          const res = await fetch(`/api/rooms/${targetRoom!.id}/verify`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ lat, lng, userId })
@@ -612,12 +606,12 @@ export default function Home() {
           const data = await res.json()
           if (data.allowed) {
             setAuthUI(prev => ({ ...prev, status: "success", logs: [...prev.logs, `[AUTH] 인증 성공. 반경 ${data.limit}km 내 진입. (거리: ${data.distance.toFixed(2)}km)`, "[SYSTEM] 암호화 채널 개방..."] }))
-            setTimeout(() => { setAuthUI(prev => ({ ...prev, active: false })); setActiveRoom({ incidentId: targetRoom.id, incidentTitle: title, region }) }, 1500)
+            setTimeout(() => { setAuthUI(prev => ({ ...prev, active: false })); setActiveRoom({ incidentId: targetRoom!.id, incidentTitle: title, region }) }, 1500)
           } else {
             setAuthUI(prev => ({ ...prev, status: "denied", logs: [...prev.logs, `[DENY] 통제 구역 이탈. (거리: ${data.distance?.toFixed(2)}km)`, "[SYSTEM] 연결 강제 종료."] }))
             setTimeout(() => setAuthUI(prev => ({ ...prev, active: false })), 4000)
           }
-        } catch (err) {
+        } catch {
           setAuthUI(prev => ({ ...prev, status: "error", logs: [...prev.logs, "[ERROR] 서버 통신 실패."] }))
           setTimeout(() => setAuthUI(prev => ({ ...prev, active: false })), 3000)
         }
@@ -657,7 +651,7 @@ export default function Home() {
       const data = await response.json()
       if (data.success) setStreamLogs(prev => [`[OK] PIPELINE TRIGGERED: ${data.message}`, ...prev.slice(0, 7)])
       else setStreamLogs(prev => [`[ERR] REFRESH FAILED: ${data.details || "UNKNOWN"}`, ...prev.slice(0, 7)])
-    } catch (err: any) { setStreamLogs(prev => [`[ERR] ${err.message}`, ...prev.slice(0, 7)]) }
+    } catch (err) { setStreamLogs(prev => [`[ERR] ${err instanceof Error ? err.message : String(err)}`, ...prev.slice(0, 7)]) }
     finally { setTimeout(() => setIsRefreshing(false), 3500) }
   }
 
@@ -668,7 +662,7 @@ export default function Home() {
     return currentTarget?.source ? [currentTarget.source] : []
   })()
 
-  const childFeeds: any[] = (() => {
+  const childFeeds: Array<{ source?: string; title?: string; summary?: string; link?: string }> = (() => {
     try { if (currentTarget?.child_feeds) return typeof currentTarget.child_feeds === "string" ? JSON.parse(currentTarget.child_feeds) : currentTarget.child_feeds }
     catch {}
     return []
@@ -740,7 +734,6 @@ export default function Home() {
         showHeatmap={showHeatmap}
         isMinimalTactical={isMinimalTactical}
         currentTarget={currentTarget}
-        tacticalToggles={tacticalToggles}
       />
 
       {/* Crosshair */}
@@ -975,7 +968,7 @@ export default function Home() {
                   return (
                     <button
                       key={r.id}
-                      onClick={() => handleRegionClick(r.id as any)}
+                      onClick={() => handleRegionClick(r.id as keyof typeof REGION_COORDS)}
                       className="cursor-pointer transition-all duration-200"
                       style={{
                         fontSize: "8px",
@@ -1166,7 +1159,7 @@ export default function Home() {
             {/* Child feed tabs */}
             {childFeeds.length > 1 && (
               <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                {childFeeds.map((feed: any, idx: number) => (
+                {childFeeds.map((feed, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setActiveChildFeedTab(idx)}
@@ -1306,10 +1299,10 @@ export default function Home() {
             </div>
           </div>
           <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-            <MetricBar label="AI ANALYTICS LATENCY"     value={telemetry.ai_processing_time}  maxValue={10} unit="s" themeColor={themeColor} themeRgb={themeRgb} />
-            <MetricBar label="GEO CACHE HIT RATE"       value={telemetry.geo_cache_hit_rate}   maxValue={100} unit="%" themeColor={themeColor} themeRgb={themeRgb} />
-            <MetricBar label="DUPLICATE FILTER RATE"    value={telemetry.duplicate_rate}       maxValue={100} unit="%" themeColor={themeColor} themeRgb={themeRgb} />
-            <MetricBar label="RSS INGEST LATENCY"       value={telemetry.rss_fetch_latency}    maxValue={5} unit="s" themeColor={themeColor} themeRgb={themeRgb} />
+            <MetricBar label="AI ANALYTICS LATENCY"     value={telemetry.ai_processing_time}  maxValue={10} unit="s" themeColor={themeColor} />
+            <MetricBar label="GEO CACHE HIT RATE"       value={telemetry.geo_cache_hit_rate}   maxValue={100} unit="%" themeColor={themeColor} />
+            <MetricBar label="DUPLICATE FILTER RATE"    value={telemetry.duplicate_rate}       maxValue={100} unit="%" themeColor={themeColor} />
+            <MetricBar label="RSS INGEST LATENCY"       value={telemetry.rss_fetch_latency}    maxValue={5} unit="s" themeColor={themeColor} />
             <div style={{ textAlign: "right", fontSize: "7px", color: "rgba(255,255,255,0.20)", fontFamily: "var(--font-share-tech-mono), monospace", marginTop: "2px" }}>
               UPDATED: {telemetry.last_updated ? new Date(telemetry.last_updated).toLocaleTimeString() : "PENDING"}
             </div>
@@ -1457,8 +1450,6 @@ export default function Home() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         themeColor={themeColor}
-        tacticalToggles={tacticalToggles}
-        onTacticalToggle={handleTacticalToggle}
         isMinimalTactical={isMinimalTactical}
         setIsMinimalTactical={setIsMinimalTactical}
         focusMode={focusMode}
