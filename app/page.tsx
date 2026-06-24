@@ -277,6 +277,14 @@ export default function Home() {
   const [focusMode, setFocusMode] = useState<boolean>(false)
   const [showHeatmap, setShowHeatmap] = useState<boolean>(true)
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
+  const [mapPitch, setMapPitch] = useState<number>(20)
+  const mapPitchRef = useRef(mapPitch)
+  useEffect(() => { mapPitchRef.current = mapPitch }, [mapPitch])
+  const handlePitchChange = (p: number) => {
+    setMapPitch(p)
+    const map = mapRef.current?.getMap?.() || mapRef.current
+    if (map && typeof map.easeTo === "function") map.easeTo({ pitch: p, duration: 200 })
+  }
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
   const [selectedChannel, setSelectedChannel] = useState<"GEOPOLITICS"|"ECONOMY"|"WEATHER"|"CYBER_AI">("GEOPOLITICS")
   const [selectedRegion, setSelectedRegion] = useState<keyof typeof REGION_COORDS>("GLOBAL")
@@ -314,8 +322,10 @@ export default function Home() {
     // GEOPOLITICS feed also carries TELEGRAM-sourced incidents (mirrors the SSE
     // query in app/api/news/stream), so include them or telegram nodes vanish.
     let filtered = allIncidents.filter((ev) =>
-      ev.channel === selectedChannel ||
-      (selectedChannel === "GEOPOLITICS" && ev.channel === "TELEGRAM")
+      // 지도 노드가 되려면 유효 좌표 필수 (NaN/null 좌표는 마커·flyTo에서 'Invalid LngLat' 유발)
+      Number.isFinite(ev.lng) && Number.isFinite(ev.lat) &&
+      (ev.channel === selectedChannel ||
+        (selectedChannel === "GEOPOLITICS" && ev.channel === "TELEGRAM"))
     )
     if (selectedRegion !== "GLOBAL") {
       const allowedCountries = REGION_COUNTRY_MAPPING[selectedRegion] || []
@@ -331,11 +341,20 @@ export default function Home() {
         return threatKeywords.some((kw) => content.includes(kw))
       })
     }
-    return [...filtered].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const aPinned = a.pinned === 1 ? 1 : 0
       const bPinned = b.pinned === 1 ? 1 : 0
       if (aPinned !== bPinned) return bPinned - aPinned
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+    // 중복 노드 제거: 출처+제목이 완전히 동일한 인시던트는 가장 최근 1개만 표기.
+    // (위에서 최신순 정렬했으므로 첫 등장 = 최신 업데이트 노드)
+    const seenNodes = new Set<string>()
+    return sorted.filter((ev) => {
+      const key = `${(ev.source || "").trim()}|||${(ev.title || "").trim()}`
+      if (seenNodes.has(key)) return false
+      seenNodes.add(key)
+      return true
     })
   }, [allIncidents, watchconStage, selectedChannel, selectedRegion])
 
@@ -440,9 +459,9 @@ export default function Home() {
                 setCurrentIndex(0)
                 setCurrentTarget(data[0])
                 const map = mapRef.current?.getMap?.() || mapRef.current
-                if (map && typeof map.flyTo === "function") {
+                if (map && typeof map.flyTo === "function" && Number.isFinite(data[0].lng) && Number.isFinite(data[0].lat)) {
                   map.stop()
-                  map.flyTo({ center: [data[0].lng, data[0].lat], zoom: 5.5, pitch: 20, bearing: 20, speed: 0.95, essential: true })
+                  map.flyTo({ center: [data[0].lng, data[0].lat], zoom: 5.5, pitch: mapPitchRef.current, bearing: 20, speed: 0.95, essential: true })
                 }
               }
             }
@@ -494,7 +513,7 @@ export default function Home() {
       if (currentNews) {
         setCurrentTarget(currentNews)
         if (map && typeof map.flyTo === "function") {
-          map.flyTo({ center: [currentNews.lng, currentNews.lat], zoom: 4.8, pitch: 20, bearing: -10, speed: 0.6, essential: true })
+          map.flyTo({ center: [currentNews.lng, currentNews.lat], zoom: 4.8, pitch: mapPitchRef.current, bearing: -10, speed: 0.6, essential: true })
         }
         setStreamLogs(prev => [`[LOCK] [${currentNews.level}] ${currentNews.region} — ${currentNews.country} [${currentIndex + 1}/${displayIncidents.length}]`, ...prev.slice(0, 7)])
       }
@@ -507,7 +526,7 @@ export default function Home() {
       const targetLng = currentNews?.lng ?? 126.9780
       const targetLat = currentNews?.lat ?? 37.5665
       if (map && typeof map.flyTo === "function") {
-        map.flyTo({ center: [targetLng, targetLat], zoom: 2.2, pitch: 0, bearing: 0, speed: 0.45, essential: true })
+        map.flyTo({ center: [targetLng, targetLat], zoom: 2.2, pitch: mapPitchRef.current, bearing: 0, speed: 0.45, essential: true })
       }
       setStreamLogs(prev => [`[IDLE] ORBITAL SURVEY MODE // 30S PATROL`, ...prev.slice(0, 7)])
       timer = setTimeout(() => {
@@ -1458,6 +1477,8 @@ export default function Home() {
         setShowHeatmap={setShowHeatmap}
         isAutoPilot={isAutoPilot}
         setIsAutoPilot={setIsAutoPilot}
+        pitch={mapPitch}
+        onPitchChange={handlePitchChange}
       />
     </main>
 

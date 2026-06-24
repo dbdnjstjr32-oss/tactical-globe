@@ -14,6 +14,8 @@ interface SettingsModalProps {
   setShowHeatmap: (val: boolean) => void
   isAutoPilot: boolean
   setIsAutoPilot: (val: boolean) => void
+  pitch: number
+  onPitchChange: (val: number) => void
 }
 
 function Switch({ on, onClick, themeColor }: { on: boolean; onClick: () => void; themeColor: string }) {
@@ -56,6 +58,34 @@ function SettingRow({ label, desc, on, onClick, themeColor }: { label: string; d
   )
 }
 
+function SettingSlider({ label, desc, value, min, max, step, unit, onChange, themeColor }: { label: string; desc: string; value: number; min: number; max: number; step: number; unit: string; onChange: (v: number) => void; themeColor: string }) {
+  return (
+    <div className="flex flex-col gap-2 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="flex items-center justify-between">
+        <span style={{ fontSize: "12px", fontWeight: 600, color: "#ffffff", letterSpacing: "0.08em", fontFamily: "var(--font-orbitron), sans-serif" }}>
+          {label}
+        </span>
+        <span style={{ fontSize: "11px", fontWeight: 700, color: themeColor, fontFamily: "var(--font-share-tech-mono), monospace" }}>
+          {value}{unit}
+        </span>
+      </div>
+      <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-share-tech-mono), monospace" }}>
+        {desc}
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange?.(Number(e.target.value))}
+        aria-label={label}
+        style={{ width: "100%", accentColor: themeColor, cursor: "pointer", height: "4px" }}
+      />
+    </div>
+  )
+}
+
 function SettingSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
@@ -74,7 +104,8 @@ export default function SettingsModal({
   isMinimalTactical, setIsMinimalTactical,
   focusMode, setFocusMode,
   showHeatmap, setShowHeatmap,
-  isAutoPilot, setIsAutoPilot
+  isAutoPilot, setIsAutoPilot,
+  pitch, onPitchChange
 }: SettingsModalProps) {
   if (!isOpen) return null
 
@@ -130,6 +161,17 @@ export default function SettingsModal({
               desc="Hides side panels to focus entirely on the tactical map."
               on={focusMode}
               onClick={() => setFocusMode(!focusMode)}
+              themeColor={themeColor}
+            />
+            <SettingSlider
+              label="CAMERA PITCH"
+              desc="Tilt angle of the globe camera (0 = top-down, 70 = near-horizon)."
+              value={pitch}
+              min={0}
+              max={70}
+              step={1}
+              unit="°"
+              onChange={onPitchChange}
               themeColor={themeColor}
             />
           </SettingSection>
