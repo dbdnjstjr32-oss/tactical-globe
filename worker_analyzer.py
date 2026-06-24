@@ -493,6 +493,9 @@ def process_single_feed(feed, geo_cache):
                 break
 
         current_time = pub_date or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        # first_seen은 발행일이 아니라 '우리 시스템이 처음 수집한 시각'(now). 발행일이
+        # 오래된 기사도 막 수집되면 최근 항목으로 화면 시간창에 잡히도록 분리한다.
+        ingested_time = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         severity = intel_pack.get("severity", 0.5)
         level = "CRITICAL" if severity >= 0.8 else "ELEVATED" if severity >= 0.5 else "NOMINAL"
 
@@ -585,7 +588,7 @@ def process_single_feed(feed, geo_cache):
                 article_id, coords["country"], region, coords["lng"], coords["lat"],
                 severity, category,
                 title, source, current_time, intel_pack.get("tactical_summary", summary),
-                article_id, "[]", level, 1, current_time,
+                article_id, "[]", level, 1, ingested_time,
                 min(round(severity * 1.15, 2), 1.0),
                 0.10 if level == "CRITICAL" else 0.02,
                 "ESCALATING" if level == "CRITICAL" else "SUSTAINED",

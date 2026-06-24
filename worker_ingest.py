@@ -12,7 +12,7 @@ import hashlib
 import time
 import random
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 from db_utils import get_db_connection
 
@@ -204,6 +204,8 @@ WATCHCON_TIER_OVERRIDES = {
 }
 
 FILTER_THRESHOLD = 4
+# 리프레시(--once) 시 각 소스에서 강제 수집할 시간 윈도우 (최근 N시간만)
+REFRESH_LOOKBACK_HOURS = 5
 POLITICS_KEYWORDS = [
     "politics", "election", "parliament", "congress", "senate", "ballot",
     "정치", "선거", "국회", "대선", "총선", "여야", "정당"
@@ -311,6 +313,16 @@ def parse_pub_date(pub_date_str):
         return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
     except Exception:
         return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+def within_lookback_hours(pub_date_iso, hours):
+    """pub_date(ISO 8601 UTC, 'Z')가 최근 N시간 이내인지. 날짜 불명이면 포함(True)."""
+    if not pub_date_iso:
+        return True
+    try:
+        dt = datetime.fromisoformat(pub_date_iso.replace("Z", "+00:00"))
+        return (datetime.now(timezone.utc) - dt) <= timedelta(hours=hours)
+    except Exception:
+        return True
 
 # ─── RSS Fetcher (supports all source sets) ───────────────────────────────────
 SOURCE_NAME_MAP = {
@@ -1314,6 +1326,10 @@ def run_ingestor():
             with get_db_connection() as conn:
                 cursor = conn.cursor()
                 for channel, feeds, keywords, threshold in all_rss_channel_feeds:
+                    # 리프레시(--once): 각 소스를 최신순으로, 최근 5시간 항목만 강제 수집
+                    if once_mode:
+                        feeds = [f for f in feeds if within_lookback_hours(f.get("pub_date"), REFRESH_LOOKBACK_HOURS)]
+                        feeds = sorted(feeds, key=lambda f: f.get("pub_date") or "", reverse=True)
                     for feed in feeds:
                         # 1. Keyword priority filter
                         if evaluate_tactical_priority(feed, keywords) < threshold:

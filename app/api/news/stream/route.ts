@@ -76,9 +76,9 @@ export async function GET(request: NextRequest) {
               child_feeds,
               pinned,
               watchcon_trigger
-            FROM incidents 
-            WHERE channel = ? AND created_at >= ?
-            ORDER BY created_at DESC 
+            FROM incidents
+            WHERE channel = ? AND first_seen >= ?
+            ORDER BY first_seen DESC
             LIMIT 30
           `;
           let params = [channel, timeLimit];
@@ -101,9 +101,9 @@ export async function GET(request: NextRequest) {
                 child_feeds,
                 pinned,
                 watchcon_trigger
-              FROM incidents 
-              WHERE (channel = 'GEOPOLITICS' OR channel = 'TELEGRAM') AND created_at >= ?
-              ORDER BY created_at DESC 
+              FROM incidents
+              WHERE (channel = 'GEOPOLITICS' OR channel = 'TELEGRAM') AND first_seen >= ?
+              ORDER BY first_seen DESC
               LIMIT 30
             `;
             params = [timeLimit];
